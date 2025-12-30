@@ -1,0 +1,54 @@
+[project]
+name = "code-recap"
+version = "1.0.0"
+description = "Tools for analyzing and summarizing git activity across multiple repositories"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+dependencies = [
+    "litellm>=1.55.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.8.0",
+]
+
+[project.scripts]
+summarize-activity = "summarize_activity:main"
+summarize-daily-activity = "summarize_daily_activity:main"
+git-activity-review = "git_activity_review:main"
+list-commits-by-date = "list_commits_by_date:main"
+git-utils = "git_utils:main"
+generate-html-report = "generate_html_report:main"
+deploy-reports = "deploy_reports:main"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "SIM",    # flake8-simplify
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "B008",   # do not perform function calls in argument defaults
+    "B905",   # zip without explicit strict
+    "SIM108", # use ternary operator (can reduce readability)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["git_utils", "git_activity_review"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

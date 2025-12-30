@@ -1,0 +1,107 @@
+# Meta - Git Activity Summary Tools
+
+This project provides Python scripts for summarizing git activity across multiple repositories, 
+with LLM-powered summaries and HTML report generation. It's designed for consultants who work
+across multiple clients/projects.
+
+## Project Structure
+
+```
+meta/
+├── config/                    # User configuration (gitignored)
+│   ├── config.yaml            # Main configuration file
+│   └── keys/                  # API key scripts
+├── config.example/            # Example configuration (committed)
+├── output/                    # Generated outputs (gitignored)
+├── summarize_activity.py      # Main LLM summarization script
+├── git_activity_review.py     # Detailed statistics generation
+├── generate_html_report.py    # Convert markdown to HTML reports
+├── generate_blog_post.py      # AI-assisted blog post generation
+├── git_utils.py               # Shared git utilities
+├── list_commits_by_date.py    # List commits for specific dates
+└── pyproject.toml             # Project dependencies and config
+```
+
+## Critical Rules
+
+### 1. NO HARDCODED CLIENT/COMPANY REFERENCES
+
+**This project is intended to be open-source.** All company names, client names, and any 
+identifying information MUST be in the configuration files only, never in source code.
+
+- ❌ DO NOT hardcode company names (e.g., "Acme Corp")
+- ❌ DO NOT hardcode client names (e.g., "Beta Inc") 
+- ❌ DO NOT embed logos or company-specific assets in source code
+- ✅ Use generic examples in code comments and help text (e.g., "Your Company", "Client Name")
+- ✅ All personalization goes in `config/config.yaml`
+
+### 2. Configuration Structure
+
+The `config/config.yaml` file contains:
+- `global_context`: Company background for LLM context
+- `clients`: Client definitions with directory patterns, exclusions, and context
+- `excludes`: File patterns to exclude from statistics
+- `html_report`: Branding and styling for HTML reports
+- `prompts`: Optional LLM prompt overrides
+
+### 3. Summary Audiences
+
+The scripts generate summaries for different audiences:
+- **Period/Monthly summaries**: Client-facing - professional, focused on deliverables
+- **Client summary**: Client-facing - comprehensive report for the client
+- **Internal summary**: Company-facing - showcases capabilities, internal metrics
+
+LLM prompts should be aware of the target audience and adjust tone accordingly.
+
+### 4. Code Style
+
+- Use `ruff` for linting and formatting
+- Follow existing patterns for CLI argument parsing (argparse)
+- Add docstrings to all public functions with Args/Returns sections
+- Keep scripts executable with `#!/usr/bin/env python3`
+
+### 5. Dependencies
+
+- Use `litellm` for LLM abstraction (supports OpenAI, Anthropic, Google, etc.)
+- Use `pyyaml` for configuration parsing
+- Use `markdown` for markdown-to-HTML conversion
+- Install with: `uv pip install -e .`
+
+### 6. Output Organization
+
+- All output goes to `output/` directory by default
+- Client-specific output: `output/<client_slug>/`
+- Period summaries: `output/<client_slug>/periods/YYYY-MM.md`
+- Final summaries: `output/<client_slug>/summary-YYYY.md`
+- HTML reports: `output/html/<client_slug>/`
+
+### 7. Testing Changes
+
+When making changes, test with:
+```bash
+# Dry run to verify logic without LLM costs
+./summarize_activity.py 2025-01 --author "Test" --dry-run
+
+# List available models
+./summarize_activity.py --list-models
+
+# Generate stats without LLM
+./git_activity_review.py 2025 --author "Test" --format markdown
+```
+
+### 8. Common Tasks
+
+**Adding a new config option:**
+1. Add to `load_config()` in the appropriate script
+2. Add example to `config.example/config.yaml`
+3. Update README if user-facing
+
+**Modifying LLM prompts:**
+1. Prompts can be overridden via `config.yaml` under `prompts` section
+2. Default prompts are in `summarize_activity.py` 
+3. Keep prompts generic - no company/client references
+
+**Adding new CLI options:**
+1. Add to argparse in the relevant script
+2. Document in README under the script's section
+3. Add to help text examples (using generic names)

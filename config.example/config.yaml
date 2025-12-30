@@ -1,0 +1,178 @@
+# Meta Configuration Example
+# Combined configuration for all activity summary tools.
+# Copy this to config/config.yaml and customize for your setup.
+
+# =============================================================================
+# COMPANY & CLIENT CONTEXT
+# =============================================================================
+
+# Global context is included in all LLM summaries - describe your company
+global_context: |
+  Acme Consulting is a software development consultancy specializing in IoT,
+  mobile apps, and embedded systems. We focus on quality, maintainability,
+  and delivering products that can be updated in the field.
+
+# Client definitions - maps repository patterns to clients
+clients:
+  # Example: Client with full configuration (technical audience)
+  "Acme Corp":
+    directories:
+      - "acme-*"           # Matches acme-firmware, acme-ios, etc.
+      - "AcmeSDK"          # Exact match
+    exclude:
+      - "*-legacy"         # Exclude legacy projects
+    # Audience level controls summary language complexity:
+    #   technical - Deep technical knowledge assumed, use precise terminology
+    #   developer - Developer but may not know domain specifics
+    #   mixed     - Varying technical knowledge (default)
+    #   business  - Business stakeholder, explain value and outcomes
+    #   general   - Minimal technical background, plain language only
+    audience: technical
+    context: |
+      Acme Corp is a consumer electronics company. We develop their flagship
+      product's firmware and companion mobile apps. The work involves BLE
+      communication, embedded C development, and iOS/Android apps.
+
+  # Example: Client with business-focused summaries
+  "Beta Inc":
+    directories:
+      - "beta-*"
+    audience: business  # Non-technical stakeholders receive the reports
+
+  # Example: Client with mixed audience (default)
+  "Gamma LLC":
+    directories:
+      - "gamma*"
+    # audience: mixed  # This is the default if not specified
+    context: |
+      Gamma LLC provides industrial automation solutions. Our role is
+      developing the control firmware and web dashboard.
+
+# Optional: Set default client for unmatched repositories
+# default_client: "Internal"
+
+# =============================================================================
+# EXCLUSION PATTERNS
+# =============================================================================
+# Files/directories matching these patterns are excluded from line count statistics.
+
+excludes:
+  # Global exclusions (apply to all projects)
+  global:
+    - "*.hex"
+    - "*.xcodeproj/*"
+    - "node_modules/*"
+    - "*.min.js"
+
+  # Project-specific exclusions
+  projects:
+    acme-firmware:
+      - "vendor/*"
+      - "third_party/*"
+
+# =============================================================================
+# HTML REPORT STYLING
+# =============================================================================
+# Configure company branding and client-specific styling for HTML reports.
+
+html_report:
+  # Theme: "light" or "dark"
+  theme: "light"
+
+  # Company branding (your company)
+  company:
+    name: "Acme Consulting"
+    url: "https://www.acme-consulting.example/"
+    # Logo SVG file path (relative to config directory)
+    # Leave empty to use text-only display
+    logo: ""
+
+  # Default accent colors (CSS color values)
+  defaults:
+    accent_primary: "#2196F3"    # Blue
+    accent_secondary: "#1976D2"  # Darker blue
+
+  # Client-specific branding
+  clients:
+    "Acme Corp":
+      accent_primary: "#4CAF50"    # Green
+      accent_secondary: "#388E3C"  # Darker green
+      logo: ""
+      icon: "🏭"
+      # Per-client deployment overrides
+      deploy:
+        cloudflare:
+          project_name: "acme-dev-reports"  # Full project name (ignores prefix)
+          # Additional emails with access (combined with global access_emails)
+          access_emails:
+            - "cto@acme-corp.example"
+            - "pm@acme-corp.example"
+
+    "Beta Inc":
+      accent_primary: "#FF9800"    # Orange
+      accent_secondary: "#F57C00"  # Darker orange
+      logo: ""
+      icon: "🚀"
+      # Example: If Beta Inc is a client of Acme Corp (subcontracted work),
+      # you can override the company shown in the header:
+      # company_override:
+      #   name: "Acme Corp"
+      #   url: "https://acme.example.com"
+      #   logo: "acme.svg"
+
+    Other:
+      accent_primary: "#78909C"    # Blue-grey
+      accent_secondary: "#546E7A"  # Darker blue-grey
+      logo: ""
+      icon: "📁"
+
+# =============================================================================
+# DEPLOYMENT SETTINGS
+# =============================================================================
+# Configure how reports are deployed/shared with clients.
+
+deploy:
+  providers:
+    # Zip provider - creates downloadable zip files
+    zip:
+      output_dir: "output/zips"    # Where to save zip files
+
+    # Cloudflare Pages - deploy to Cloudflare (requires wrangler CLI)
+    # Install wrangler: npm install -g wrangler
+    # Login: wrangler login
+    cloudflare:
+      # Project name prefix (e.g., "reports" -> "reports-acme.pages.dev")
+      project_prefix: "reports"
+      # Account ID (leave empty to use CLOUDFLARE_ACCOUNT_ID env var)
+      account_id: ""
+      # API token for Access control (leave empty to use CLOUDFLARE_API_TOKEN env var)
+      # Required for Cloudflare Access - restricts who can view reports
+      # Create at: https://dash.cloudflare.com/profile/api-tokens
+      # Permissions needed: Account > Access: Organizations, Identity Providers, and Groups > Edit
+      api_token: ""
+      # Global access emails (all clients will include these)
+      access_emails:
+        - "admin@acme-consulting.example"
+
+# =============================================================================
+# LLM PROMPT OVERRIDES (Optional)
+# =============================================================================
+# Override the default system prompts used for LLM summarization.
+# These are multiline strings - use | for literal block scalar.
+# If not specified, built-in defaults are used.
+
+# prompts:
+#   # Period/monthly summaries (client-facing)
+#   period_summary: |
+#     You are an expert at summarizing software development activity.
+#     Given git activity data, provide a concise summary...
+#
+#   # Client summary reports (client-facing)
+#   final_summary: |
+#     You are an expert at creating comprehensive development reports.
+#     Create a cohesive narrative that captures the work accomplished...
+#
+#   # Internal company summary (your company-facing)
+#   internal_summary: |
+#     You are creating an internal activity report.
+#     Summarize work done across all clients...
