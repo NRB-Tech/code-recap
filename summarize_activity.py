@@ -449,8 +449,10 @@ def _generate_subperiods(
 
 
 # System prompts for hierarchical summarization
-# Note: Period and Final summaries are CLIENT-FACING, Internal summary is company-facing
+# CLIENT-FACING prompts are used when generating reports for specific clients
+# INTERNAL prompts are used when no clients are configured (personal/team use)
 # {audience_guidance} placeholder is replaced with audience-specific instructions
+
 PERIOD_SUMMARY_SYSTEM_PROMPT = """You are an expert at summarizing software development activity.
 Given git activity data for a specific time period, provide a concise but comprehensive summary.
 
@@ -478,6 +480,32 @@ and any significant structural changes to the codebase.
 
 Be specific about what was accomplished, mentioning project names and technologies where relevant.
 Keep the summary focused and actionable - this will be combined with other period summaries later.
+Do NOT add any other sections or headings beyond those specified above."""
+
+# Internal period prompt (for personal/team use without clients)
+INTERNAL_PERIOD_SUMMARY_PROMPT = """You are an expert at summarizing software development activity.
+Given git activity data for a specific time period, provide a concise but comprehensive summary.
+
+This is an INTERNAL summary for the developer or team. Be direct and technical.
+
+Start with a 1-2 sentence introduction paragraph summarizing the main focus of the period.
+
+Then use EXACTLY these section headings (### level):
+
+### Key Changes & Features
+The main accomplishments, features implemented, and improvements made.
+Group related items with sub-bullets. Be specific about what was built.
+
+### Technologies & Languages
+The primary languages, frameworks, tools, and protocols used.
+Mention specific versions or SDKs where relevant.
+
+### Patterns & Architecture
+Notable development patterns, architectural decisions, refactoring efforts,
+and any significant structural changes to the codebase.
+
+Be specific about what was accomplished, mentioning project names and technologies where relevant.
+Keep the summary focused - this will be combined with other period summaries later.
 Do NOT add any other sections or headings beyond those specified above."""
 
 
@@ -589,6 +617,39 @@ Write these from the client's perspective, not the consulting company's.
 
 Be specific and cite actual projects, technologies, and accomplishments from the summaries provided."""
 
+# Internal final summary (for personal/team use without clients)
+INTERNAL_FINAL_SUMMARY_PROMPT = """You are an expert at creating comprehensive development activity reports.
+Given summaries of multiple time periods, create a cohesive narrative that captures the full scope
+of work accomplished.
+
+This is an INTERNAL summary for the developer or team. Be direct and comprehensive.
+
+Structure your response as follows:
+
+## Overview
+2-3 sentences capturing the overall theme and scale of work delivered.
+
+## Key Achievements & Features
+A numbered list of the most significant accomplishments, features shipped, or milestones reached.
+Be specific with project names, version numbers, and measurable outcomes where possible.
+
+## Technology & Language Trends
+What technologies were most used, any shifts in focus.
+
+## Project Focus Areas
+Which projects received the most attention and why.
+
+## Development Highlights
+Notable engineering decisions, optimizations, or architectural improvements.
+
+## Suggested Blog Posts
+Suggest 3-5 potential blog post topics based on the technical work completed. For each:
+- A catchy title
+- 1-2 sentence description of what it would cover
+
+Be specific and cite actual projects, technologies, and accomplishments from the summaries provided."""
+
+# Multi-client internal summary (for consultancies aggregating all client work)
 INTERNAL_SUMMARY_SYSTEM_PROMPT = """You are an expert at creating internal company activity reports.
 You are summarizing all work done across multiple clients/projects for an INTERNAL audience
 at the consulting company. The goal is to showcase the company's capabilities and
@@ -1318,9 +1379,14 @@ Environment variables for API keys:
             return 1
         print(f"Filtered to {len(all_repos)} repositories", file=sys.stderr)
 
-    # Use client configuration from unified config
+    # Use client configuration from unified config (only if clients are defined)
     client_config: Optional[ClientConfig] = None
-    if not args.no_client_grouping and file_client_config:
+    has_clients = (
+        file_client_config is not None
+        and file_client_config.clients
+        and not args.no_client_grouping
+    )
+    if has_clients:
         client_config = file_client_config
         print(f"Clients: {', '.join(client_config.clients.keys())}", file=sys.stderr)
 
@@ -1335,7 +1401,7 @@ Environment variables for API keys:
         else:
             # No config or unknown client - use all repos with that client name
             repos_by_client = {args.client: all_repos}
-    elif client_config and not args.no_client_grouping:
+    elif has_clients:
         repos_by_client = client_config.categorize_repos(all_repos)
         # Show categorization
         for client, client_repos in repos_by_client.items():
@@ -1345,8 +1411,8 @@ Environment variables for API keys:
                 file=sys.stderr,
             )
     else:
-        # No client grouping - single output
-        repos_by_client = {"": all_repos}
+        # No client grouping - single internal-facing output
+        repos_by_client = {None: all_repos}
 
     # Fetch repos unless --no-fetch
     if not args.no_fetch:
@@ -1389,25 +1455,44 @@ Environment variables for API keys:
         if not repos:
             continue
 
-        client_display = client_name or "All Projects"
+        # Determine if this is internal mode (no clients configured)
+        is_internal_mode = client_name is None
+        client_display = client_name if client_name else "All Projects"
         print(f"{'=' * 60}", file=sys.stderr)
-        print(f"Processing client: {client_display} ({len(repos)} repos)", file=sys.stderr)
+        print(f"Processing: {client_display} ({len(repos)} repos)", file=sys.stderr)
         print(f"{'=' * 60}", file=sys.stderr)
 
         # Get context and audience for this client
-        global_context = client_config.global_context if client_config else ""
-        client_context = client_config.get_client_context(client_name) if client_config else ""
-        client_audience = client_config.get_client_audience(client_name) if client_config else DEFAULT_AUDIENCE
+        global_context = ""
+        client_context = ""
+        client_audience = DEFAULT_AUDIENCE
+        if client_config and client_name:
+            global_context = client_config.global_context
+            client_context = client_config.get_client_context(client_name)
+            client_audience = client_config.get_client_audience(client_name)
+        elif file_client_config:
+            # Use global context even without clients
+            global_context = file_client_config.global_context
 
-        # Build system prompts with context (using overrides from config if provided)
+        # Build system prompts - use internal prompts when no clients
         period_base = file_prompt_config.period_summary if file_prompt_config else None
         final_base = file_prompt_config.final_summary if file_prompt_config else None
-        period_system_prompt = build_period_system_prompt(
-            global_context, client_context, period_base, client_audience
-        )
-        final_system_prompt = build_final_system_prompt(
-            global_context, client_context, final_base, client_audience
-        )
+
+        if is_internal_mode:
+            # Internal mode: use internal-facing prompts
+            period_system_prompt = period_base or INTERNAL_PERIOD_SUMMARY_PROMPT
+            final_system_prompt = final_base or INTERNAL_FINAL_SUMMARY_PROMPT
+            if global_context:
+                period_system_prompt += f"\n\n---\n\nBackground:\n{global_context}"
+                final_system_prompt += f"\n\n---\n\nBackground:\n{global_context}"
+        else:
+            # Client mode: use client-facing prompts with audience
+            period_system_prompt = build_period_system_prompt(
+                global_context, client_context, period_base, client_audience
+            )
+            final_system_prompt = build_final_system_prompt(
+                global_context, client_context, final_base, client_audience
+            )
 
         # Initialize cost tracking for this client
         cost_tracker = CostTracker()

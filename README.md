@@ -20,41 +20,29 @@ Generate beautiful activity reports, client summaries, and blog posts from your 
 
 ## Use Cases
 
-### "What did I work on this week?"
+### Year-end report
 
 ```bash
-# Get an LLM-powered summary of yesterday's work
+./summarize_activity.py 2025 --author "Your Name"
+./generate_html_report.py
+# → Reports saved to output/html/
+```
+
+### Daily time logging
+
+```bash
 ./summarize_daily_activity.py --author "Your Name" --date yesterday
-
-# Or just list the commits (no LLM)
-./list_commits_by_date.py 2025-01-03 --author "Your Name"
 ```
 
-### "Generate a year-end report for my client"
+### Blog post from your commits
 
 ```bash
-# Create a narrative summary organized by month
-./summarize_activity.py 2025 --author "Your Name" --client "Acme Corp"
-
-# Generate detailed statistics
-./git_activity_review.py 2025 --author "Your Name" --client "Acme Corp"
-
-# Convert to a branded HTML report
-./generate_html_report.py output/acme/summary-2025.md
+./generate_blog_post.py full "Building a Custom Protocol" --period 2025-Q3 --author "Your Name"
 ```
 
-### "Write a blog post about that feature I built"
+### Multi-year statistics (CSV export)
 
 ```bash
-# Research relevant commits and draft a post
-./generate_blog_post.py full "Implementing OTA Firmware Updates" \
-    --period 2025-Q3 --author "Your Name"
-```
-
-### "How much did I code over the last 5 years?"
-
-```bash
-# Export yearly stats to CSV for charting
 ./git_activity_review.py 2020:2025 --author "Your Name" --granularity year --format csv
 ```
 
@@ -66,18 +54,19 @@ Code Recap scans sibling directories for git repositories and aggregates commit 
 
 ```
 ~/Documents/Repos/           # Root directory
-├── client-a-firmware/       # Git repository
-├── client-a-ios-app/        # Git repository  
-├── client-b-backend/        # Git repository
-├── my-side-project/         # Git repository
+├── project-a/               # Git repository
+├── project-b/               # Git repository  
+├── side-project/            # Git repository
 └── code-recap/              # This toolset
     └── output/              # Generated reports
-        ├── client-a/        # Client A's reports
-        ├── client-b/        # Client B's reports
-        └── other/           # Uncategorized projects
+        └── summary-2025.md  # Your year in review
 ```
 
-Configure `config/config.yaml` to map repositories to clients using glob patterns:
+**No configuration needed for basic use.** Just run the commands and get a unified report.
+
+### For Consultants (Optional)
+
+If you work with multiple clients, configure `config/config.yaml` to organize reports by client:
 
 ```yaml
 clients:
@@ -89,27 +78,50 @@ clients:
       - "beta-*"
 ```
 
+This creates separate reports per client in `output/acme_corp/`, `output/beta_inc/`, etc.
+
 ---
 
 ## Quick Start
 
 ```bash
-# Clone and enter the directory
-git clone https://github.com/NRB-Tech/code-recap.git
-cd code-recap
-
-# Install dependencies
+# Install
 pip install -e .
-# Or with uv: uv sync
-
-# Copy example config
 cp -r config.example/* config/
 
-# Set your LLM API key (for AI-powered features)
-export OPENAI_API_KEY='sk-...'
+# Set API key (choose one)
+export OPENAI_API_KEY='sk-...'      # For GPT-4o-mini
+export GEMINI_API_KEY='...'         # For Gemini Flash
+export ANTHROPIC_API_KEY='sk-...'   # For Claude Haiku
 
-# Generate your first summary
-./summarize_activity.py 2025 --author "Your Name" --dry-run
+# Generate 2025 year-in-review for all clients
+./summarize_activity.py 2025 --author "Your Name"
+
+# Convert to HTML reports
+./generate_html_report.py
+```
+
+That's it! Find your reports in `output/html/`.
+
+---
+
+## Recommended Models
+
+Code Recap uses [LiteLLM](https://docs.litellm.ai/) to support multiple LLM providers. Choose based on your needs:
+
+| Model | Command | Best For | Cost |
+|-------|---------|----------|------|
+| **GPT-4o-mini** | `--model gpt-4o-mini` | Default choice, reliable and fast | ~$0.15/year |
+| **Gemini 2.0 Flash** | `--model gemini/gemini-2.0-flash` | Large codebases (1M context), very fast | ~$0.05/year |
+| **Claude Haiku** | `--model anthropic/claude-3-5-haiku-latest` | Best writing quality for summaries | ~$0.30/year |
+
+*Costs shown are approximate for summarizing 1 year of typical developer activity (~3000 commits).*
+
+```bash
+# Examples
+./summarize_activity.py 2025 --author "Your Name"                              # Uses default (GPT-4o-mini)
+./summarize_activity.py 2025 --author "Your Name" --model gemini/gemini-2.0-flash
+./summarize_activity.py --list-models                                           # See all available models
 ```
 
 ---
@@ -118,19 +130,19 @@ export OPENAI_API_KEY='sk-...'
 
 ### `summarize_activity.py` — LLM-Powered Summaries
 
-Generates narrative summaries of git activity using hierarchical LLM summarization. Supports OpenAI, Anthropic, and Google Gemini.
+Generates narrative summaries of git activity using hierarchical LLM summarization.
 
 ```bash
-./summarize_activity.py 2025 --author "Your Name"
-./summarize_activity.py 2025 --author "Your Name" --client "Acme Corp"
-./summarize_activity.py 2025 --author "Your Name" --model gemini/gemini-2.0-flash
-./summarize_activity.py --list-models  # See available models with pricing
+./summarize_activity.py 2025 --author "Your Name"                    # All clients
+./summarize_activity.py 2025 --author "Your Name" --client "Acme"    # Specific client
+./summarize_activity.py 2025 --author "@company.com"                 # Match by email domain
+./summarize_activity.py 2025 --author "Your Name" --dry-run          # Preview (no API cost)
 ```
 
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--granularity` | Period breakdown (week/month/quarter/year) | `month` |
-| `--model` | LiteLLM model string | `gpt-4o-mini` |
+| `--model` | LLM model (see Recommended Models above) | `gpt-4o-mini` |
 | `--client` | Filter to specific client | All clients |
 | `--max-cost` | Budget limit in USD | `1.00` |
 | `--dry-run` | Preview without API calls | `false` |
@@ -185,8 +197,8 @@ Two-stage pipeline: research commits first, then generate a polished blog post.
 Converts markdown summaries to styled HTML reports with your company branding.
 
 ```bash
-./generate_html_report.py output/acme/summary-2025.md
-./generate_html_report.py --client "Acme Corp"  # Generate all reports for a client
+./generate_html_report.py                       # Generate all HTML reports
+./generate_html_report.py --client "Acme"       # Just one client
 ```
 
 ---
@@ -217,15 +229,17 @@ Utilities for managing multiple repositories.
 
 ## Configuration
 
-All configuration files live in `config/` (not committed). Copy examples from `config.example/`:
+Configuration is **optional**. For basic use, just run the scripts—no config needed.
+
+For customization, copy examples from `config.example/`:
 
 ```bash
 cp -r config.example/* config/
 ```
 
-### Client Configuration (`config/config.yaml`)
+### Client Configuration (`config/config.yaml`) — Optional
 
-Configure automatic project-to-client mapping for consultant workflows:
+If you're a consultant working with multiple clients, configure project-to-client mapping:
 
 ```yaml
 clients:

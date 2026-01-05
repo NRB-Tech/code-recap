@@ -1,10 +1,38 @@
 [project]
 name = "code-recap"
 version = "1.0.0"
-description = "Tools for analyzing and summarizing git activity across multiple repositories"
+description = "Git activity analysis and LLM-powered summary tools for developers and consultants"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.9"
+authors = [
+    {name = "Code Recap Contributors"}
+]
+keywords = [
+    "git",
+    "activity",
+    "summary",
+    "llm",
+    "consulting",
+    "reporting",
+    "productivity",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Topic :: Utilities",
+]
 dependencies = [
     "litellm>=1.55.0",
     "pyyaml>=6.0",
@@ -13,20 +41,45 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "ruff>=0.8.0",
+    "build>=1.0.0",
+    "twine>=5.0.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/nrb-tech/code-recap"
+Repository = "https://github.com/nrb-tech/code-recap"
+Documentation = "https://github.com/nrb-tech/code-recap#readme"
+Issues = "https://github.com/nrb-tech/code-recap/issues"
+
 [project.scripts]
-summarize-activity = "summarize_activity:main"
-summarize-daily-activity = "summarize_daily_activity:main"
-git-activity-review = "git_activity_review:main"
-list-commits-by-date = "list_commits_by_date:main"
-git-utils = "git_utils:main"
-generate-html-report = "generate_html_report:main"
-deploy-reports = "deploy_reports:main"
+code-recap = "code_recap.summarize_activity:main"
+summarize-activity = "code_recap.summarize_activity:main"
+summarize-daily-activity = "code_recap.summarize_daily_activity:main"
+git-activity-review = "code_recap.git_activity_review:main"
+list-commits-by-date = "code_recap.list_commits_by_date:main"
+generate-html-report = "code_recap.generate_html_report:main"
+deploy-reports = "code_recap.deploy_reports:main"
+generate-blog-post = "code_recap.generate_blog_post:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/code_recap"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/README.md",
+    "/LICENSE",
+    "/config.example",
+]
 
 [tool.ruff]
 target-version = "py39"
 line-length = 100
+src = ["src"]
 
 [tool.ruff.lint]
 select = [
@@ -47,7 +100,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["git_utils", "git_activity_review"]
+known-first-party = ["code_recap"]
 
 [tool.ruff.format]
 quote-style = "double"
