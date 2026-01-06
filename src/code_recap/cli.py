@@ -329,7 +329,7 @@ source keys/all.sh
 """)
 
     print("""# Generate a year-in-review summary
-code-recap summarize 2025 --html --open
+code-recap summarize 2025 --open
 
 # Quick daily summary for time logging
 code-recap daily
@@ -361,8 +361,8 @@ Commands:
   init                 Create a template config.yaml file
 
 Quick start:
-  code-recap summarize 2025                # Uses git config user.name
-  code-recap summarize 2025 --html
+  code-recap summarize 2025                # Generates markdown + HTML reports
+  code-recap summarize 2025 --open         # Also opens HTML in browser
   code-recap daily
   code-recap stats 2025 --format markdown
 
@@ -372,9 +372,9 @@ Options:
   help <command>       Show help for a specific command
 
 Examples:
-  code-recap summarize 2025                               # Year summary
+  code-recap summarize 2025                               # Year summary + HTML
   code-recap summarize 2025-Q3                            # Quarter
-  code-recap summarize 2025-06 --html                     # Month + HTML
+  code-recap summarize 2025-06 --no-html                  # Month, skip HTML
   code-recap daily --date yesterday                       # Daily summary
   code-recap stats 2020:2025 --granularity year
 

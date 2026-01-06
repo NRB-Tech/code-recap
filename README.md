@@ -31,7 +31,7 @@ See what generated reports look like:
 ### Year-end report with HTML
 
 ```bash
-code-recap summarize 2025 --html --open
+code-recap summarize 2025 --open
 # → Reports saved to ./code-recap-2025/ (markdown + HTML)
 ```
 
@@ -101,7 +101,7 @@ export OPENAI_API_KEY='sk-...'
 
 # Generate your year-in-review
 cd ~/Documents/Repos
-uvx code-recap summarize 2025 --html --open
+uvx code-recap summarize 2025 --open
 # → Output: ./code-recap-2025/
 ```
 
@@ -178,7 +178,7 @@ Generates narrative summaries of git activity using hierarchical LLM summarizati
 code-recap summarize 2025                               # All clients
 code-recap summarize 2025 --client "Acme"               # Specific client
 code-recap summarize 2025 --author "@company.com"       # Match by email domain
-code-recap summarize 2025 --html --open                 # With HTML + open browser
+code-recap summarize 2025 --open                        # Open HTML in browser
 code-recap summarize 2025 --dry-run                     # Preview (no API cost)
 ```
 
@@ -188,8 +188,8 @@ code-recap summarize 2025 --dry-run                     # Preview (no API cost)
 | `--model` | LLM model (see Recommended Models above) | `gpt-4o-mini` |
 | `--client` | Filter to specific client | All clients |
 | `--max-cost` | Budget limit in USD | `1.00` |
-| `--html` | Also generate HTML reports | `false` |
-| `--open` | Open HTML in browser (implies --html) | `false` |
+| `--no-html` | Skip HTML report generation | `false` |
+| `--open` | Open HTML in browser | `false` |
 | `--dry-run` | Preview without API calls | `false` |
 
 ---
