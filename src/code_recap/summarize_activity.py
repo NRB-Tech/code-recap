@@ -436,8 +436,8 @@ RECOMMENDED_MODELS = {
     "gemini": [
         ("gemini/gemini-2.0-flash-lite", "Cheapest Gemini"),
         ("gemini/gemini-2.5-flash", "Good balance, 1M context"),
-        ("gemini/gemini-3-flash", "Latest Flash"),
-        ("gemini/gemini-3-pro", "Most capable Gemini"),
+        ("gemini/gemini-3-flash-preview", "Latest Flash"),
+        ("gemini/gemini-3-pro-preview", "Most capable Gemini"),
     ],
 }
 
