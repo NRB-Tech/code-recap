@@ -3063,9 +3063,7 @@ Configuration:
     add_input_dir_arg(
         parser, help_text="Input directory containing client markdown folders (default: output/)"
     )
-    add_output_dir_arg(
-        parser, help_text="Output directory for HTML files (default: output/html/)"
-    )
+    add_output_dir_arg(parser, help_text="Output directory for HTML files (default: output/html/)")
     parser.add_argument(
         "--config",
         type=Path,
