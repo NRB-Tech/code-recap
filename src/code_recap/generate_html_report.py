@@ -585,8 +585,8 @@ a:hover {{
 }}
 
 .public-summary .content {{
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 2rem;
 }}
@@ -602,8 +602,8 @@ a:hover {{
 }}
 
 .internal-summary .content {{
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 2rem;
 }}
@@ -624,8 +624,8 @@ a:hover {{
     align-items: center;
     gap: 1rem;
     padding: 1.25rem 1.5rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     text-decoration: none;
     color: inherit;
@@ -716,7 +716,7 @@ a:hover {{
 
 .summary-back-link:hover {{
     color: var(--accent-primary);
-    background: var(--surface);
+    background: var(--bg-card);
 }}
 
 .clients-heading {{
