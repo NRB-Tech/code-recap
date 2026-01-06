@@ -619,8 +619,15 @@ def deploy_client(
     return provider.deploy(client_dir, client_name, client_slug)
 
 
-def main():
-    """Main entry point."""
+def main(argv: Optional[list[str]] = None) -> int:
+    """Main entry point.
+
+    Args:
+        argv: Command-line arguments (defaults to sys.argv[1:]).
+
+    Returns:
+        Exit code.
+    """
     parser = argparse.ArgumentParser(
         description="Deploy HTML reports to various providers.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -677,7 +684,7 @@ Available providers:
         help="List available providers and exit",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.list_providers:
         print("Available providers:")

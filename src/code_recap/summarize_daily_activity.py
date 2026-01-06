@@ -24,7 +24,6 @@ from code_recap.git_utils import (
     get_commits_with_diffs,
     run_git,
 )
-from code_recap.paths import get_config_path
 
 # Default model
 DEFAULT_MODEL = "gpt-4o-mini"
@@ -163,9 +162,7 @@ def gather_daily_activity(
 
         mark_as_processed(repo_path)
 
-        commits = get_commits_with_diffs(
-            repo_path, since_str, until_str, author, max_diff_lines
-        )
+        commits = get_commits_with_diffs(repo_path, since_str, until_str, author, max_diff_lines)
 
         if commits:
             activities.append(
@@ -531,9 +528,7 @@ Models (LiteLLM format):
             return 1
 
     # Gather activity
-    activities = gather_daily_activity(
-        repos, target_date, args.author, args.max_diff_lines
-    )
+    activities = gather_daily_activity(repos, target_date, args.author, args.max_diff_lines)
 
     if not activities:
         print(f"No commits found for {args.author} on {date_display}.", file=sys.stderr)

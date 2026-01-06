@@ -51,11 +51,15 @@ jobs:
       - name: Test CLI entry points
         run: |
           code-recap --help
-          git-activity-review --help
-          summarize-daily-activity --help
-          generate-html-report --help
-          list-commits-by-date --help
-          git-utils --help
+          code-recap --version
+          code-recap summarize --help
+          code-recap daily --help
+          code-recap stats --help
+          code-recap html --help
+          code-recap blog --help
+          code-recap commits --help
+          code-recap git --help
+          code-recap deploy --help
 
       - name: Test imports
         run: |

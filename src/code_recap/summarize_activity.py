@@ -1295,8 +1295,22 @@ Environment variables for API keys:
         metavar="PATTERN",
         help="Filter repositories by name pattern.",
     )
+    parser.add_argument(
+        "--html",
+        action="store_true",
+        help="Also generate HTML reports after markdown summaries.",
+    )
+    parser.add_argument(
+        "--open",
+        action="store_true",
+        help="Open the HTML report in browser after generation (implies --html).",
+    )
 
     args = parser.parse_args(argv)
+
+    # --open implies --html
+    if args.open:
+        args.html = True
 
     # Handle --list-models
     if args.list_models:
@@ -1755,6 +1769,39 @@ Environment variables for API keys:
 
         print(f"Internal summary written to: {internal_path}", file=sys.stderr)
         print(f"Final cost: {total_cost_tracker.summary()}", file=sys.stderr)
+
+    # Generate HTML reports if requested
+    if args.html and not args.stdout and not args.dry_run:
+        print("", file=sys.stderr)
+        print(f"{'=' * 60}", file=sys.stderr)
+        print("Generating HTML reports...", file=sys.stderr)
+        print(f"{'=' * 60}", file=sys.stderr)
+
+        from code_recap.generate_html_report import main as html_main
+
+        # Determine input and output directories
+        base_output = get_output_dir(
+            output_dir=args.output_dir,
+            period=args.period.split(":")[0] if ":" in args.period else args.period,
+        )
+
+        html_args = [
+            "--input",
+            str(base_output),
+            "--output",
+            str(base_output / "html"),
+        ]
+        if args.client:
+            html_args.extend(["--client", args.client])
+
+        html_result = html_main(html_args)
+
+        if html_result == 0 and args.open:
+            import webbrowser
+
+            index_path = base_output / "html" / "index.html"
+            if index_path.exists():
+                webbrowser.open(f"file://{index_path.resolve()}")
 
     return 0
 

@@ -843,8 +843,15 @@ def get_commit_messages(
     return commits
 
 
-def main() -> int:
-    """CLI entry point for git utilities."""
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    """CLI entry point for git utilities.
+
+    Args:
+        argv: Command-line arguments (defaults to sys.argv[1:]).
+
+    Returns:
+        Exit code.
+    """
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -959,7 +966,7 @@ def main() -> int:
         help="Number of parallel fetch operations (default: 8).",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.command is None:
         parser.print_help()

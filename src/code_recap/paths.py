@@ -4,8 +4,6 @@ Provides functions for determining configuration and output paths that work
 correctly whether the package is installed via pip/uv or run from source.
 """
 
-import os
-import sys
 from pathlib import Path
 from typing import Optional
 
@@ -24,8 +22,7 @@ def _is_installed_package() -> bool:
         # vs being in a development/source directory
         path_parts = package_path.parts
         return any(
-            part in ("site-packages", "dist-packages", ".venv", "venv")
-            for part in path_parts
+            part in ("site-packages", "dist-packages", ".venv", "venv") for part in path_parts
         )
     except (ImportError, AttributeError):
         return False

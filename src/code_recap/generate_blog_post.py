@@ -20,6 +20,13 @@ import sys
 from dataclasses import dataclass
 from typing import Optional
 
+from summarize_activity import (
+    RECOMMENDED_MODELS,
+    CostTracker,
+    call_llm,
+    load_config,
+)
+
 from code_recap.git_activity_review import (
     date_range_to_git_args,
     parse_period,
@@ -31,12 +38,6 @@ from code_recap.git_utils import (
     fetch_repos_with_progress,
     get_commits_with_diffs,
     run_git,
-)
-from summarize_activity import (
-    RECOMMENDED_MODELS,
-    CostTracker,
-    call_llm,
-    load_config,
 )
 
 # Default model
@@ -862,10 +863,12 @@ def cmd_research(args: argparse.Namespace) -> int:
         print(f"Research written to: {args.output}", file=sys.stderr)
     else:
         # Default output path
+        from code_recap.paths import get_output_dir
+
         slug = re.sub(r"[^\w\-]", "-", topic.lower())[:50]
-        output_dir = os.path.join(script_dir, "output", "blog", slug)
-        os.makedirs(output_dir, exist_ok=True)
-        output_path = os.path.join(output_dir, "research.md")
+        output_dir_path = get_output_dir(subdir=f"blog/{slug}")
+        os.makedirs(output_dir_path, exist_ok=True)
+        output_path = os.path.join(str(output_dir_path), "research.md")
         with open(output_path, "w") as f:
             f.write(output)
         print(f"Research written to: {output_path}", file=sys.stderr)
@@ -890,9 +893,8 @@ def cmd_write(args: argparse.Namespace) -> int:
         return 1
 
     # Load config
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    config_file = args.config or os.path.join(script_dir, DEFAULT_CONFIG_FILE)
-    client_config, _ = load_config(config_file)
+    config_file = get_config_path(args.config)
+    client_config, _ = load_config(str(config_file))
 
     # Try to get context from metadata
     with open(research_path) as f:
@@ -1017,8 +1019,10 @@ def cmd_full(args: argparse.Namespace) -> int:
         else:
             output_dir = os.path.dirname(args.output) or "."
     else:
+        from code_recap.paths import get_output_dir
+
         slug = re.sub(r"[^\w\-]", "-", topic.lower())[:50]
-        output_dir = os.path.join(script_dir, "output", "blog", slug)
+        output_dir = str(get_output_dir(subdir=f"blog/{slug}"))
 
     os.makedirs(output_dir, exist_ok=True)
     research_path = os.path.join(output_dir, "research.md")

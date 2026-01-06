@@ -52,15 +52,7 @@ Documentation = "https://github.com/nrb-tech/code-recap#readme"
 Issues = "https://github.com/nrb-tech/code-recap/issues"
 
 [project.scripts]
-code-recap = "code_recap.summarize_activity:main"
-summarize-activity = "code_recap.summarize_activity:main"
-summarize-daily-activity = "code_recap.summarize_daily_activity:main"
-git-activity-review = "code_recap.git_activity_review:main"
-list-commits-by-date = "code_recap.list_commits_by_date:main"
-generate-html-report = "code_recap.generate_html_report:main"
-deploy-reports = "code_recap.deploy_reports:main"
-generate-blog-post = "code_recap.generate_blog_post:main"
-git-utils = "code_recap.git_utils:main"
+code-recap = "code_recap.cli:main"
 
 [build-system]
 requires = ["hatchling"]

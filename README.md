@@ -21,56 +21,56 @@ Generate beautiful activity reports, client summaries, and blog posts from your 
 See what generated reports look like:
 
 - [**Example HTML Report**](https://nrb-tech.github.io/code-recap/output.example/html/) — Browse the styled HTML version
-- [Monthly summary (markdown)](output.example/acme_widgets/periods/2024-10.md)
-- [Annual client summary (markdown)](output.example/acme_widgets/summary-2024.md)
+- [Monthly summary (markdown)](https://github.com/nrb-tech/code-recap/blob/main/output.example/acme_widgets/periods/2024-10.md)
+- [Annual client summary (markdown)](https://github.com/nrb-tech/code-recap/blob/main/output.example/acme_widgets/summary-2024.md)
 
 ---
 
 ## Use Cases
 
-### Year-end report
+### Year-end report with HTML
 
 ```bash
-code-recap 2025 --author "Your Name"
-generate-html-report
-# → Reports saved to ./code-recap-2025/html/
+code-recap summarize 2025 --author "Your Name" --html --open
+# → Reports saved to ./code-recap-2025/ (markdown + HTML)
 ```
 
 ### Daily time logging
 
 ```bash
-summarize-daily-activity --author "Your Name" --date yesterday
+code-recap daily --author "Your Name" --date yesterday
 ```
 
 ### Blog post from your commits
 
 ```bash
-generate-blog-post full "Building a Custom Protocol" --period 2025-Q3 --author "Your Name"
+code-recap blog full "Building a Custom Protocol" --period 2025-Q3 --author "Your Name"
 ```
 
 ### Multi-year statistics (CSV export)
 
 ```bash
-git-activity-review 2020:2025 --author "Your Name" --granularity year --format csv
+code-recap stats 2020:2025 --author "Your Name" --granularity year --format csv
 ```
 
 ---
 
 ## How It Works
 
-Code Recap scans sibling directories for git repositories and aggregates commit data:
+Run `code-recap` from a directory containing git repositories:
 
 ```
-~/Documents/Repos/           # Root directory
-├── project-a/               # Git repository
-├── project-b/               # Git repository  
-├── side-project/            # Git repository
-└── code-recap/              # This toolset
-    └── output/              # Generated reports
-        └── summary-2025.md  # Your year in review
+~/Documents/Repos/           # Run code-recap here
+├── project-a/               # Git repository (scanned)
+├── project-b/               # Git repository (scanned)
+├── side-project/            # Git repository (scanned)
+└── code-recap-2025/         # Generated reports (created)
+    ├── summary-2025.md
+    └── html/
+        └── index.html
 ```
 
-**No configuration needed for basic use.** Just run the commands and get a unified report.
+**No configuration needed for basic use.** Just run the command and get a unified report.
 
 ### For Consultants (Optional)
 
@@ -86,7 +86,7 @@ clients:
       - "beta-*"
 ```
 
-This creates separate reports per client in `output/acme_corp/`, `output/beta_inc/`, etc.
+This creates separate reports per client in `code-recap-2025/acme_corp/`, etc.
 
 ---
 
@@ -107,15 +107,13 @@ export OPENAI_API_KEY='sk-...'      # For GPT-4o-mini
 export GEMINI_API_KEY='...'         # For Gemini Flash
 export ANTHROPIC_API_KEY='sk-...'   # For Claude Haiku
 
-# Generate 2025 year-in-review
-code-recap 2025 --author "Your Name"
+# Generate 2025 year-in-review with HTML
+cd ~/Documents/Repos
+code-recap summarize 2025 --author "Your Name" --html --open
 # → Output: ./code-recap-2025/
-
-# Convert to HTML reports
-generate-html-report
 ```
 
-That's it! Find your reports in `output/html/`.
+That's it! Your reports open automatically in the browser.
 
 ---
 
@@ -133,24 +131,41 @@ Code Recap uses [LiteLLM](https://docs.litellm.ai/) to support multiple LLM prov
 
 ```bash
 # Examples
-code-recap 2025 --author "Your Name"                              # Uses default (GPT-4o-mini)
-code-recap 2025 --author "Your Name" --model gemini/gemini-2.0-flash
-code-recap --list-models                                           # See all available models
+code-recap summarize 2025 --author "Your Name"                              # Uses default (GPT-4o-mini)
+code-recap summarize 2025 --author "Your Name" --model gemini/gemini-2.0-flash
+code-recap summarize --list-models                                           # See all available models
 ```
 
 ---
 
-## Scripts Reference
+## Command Reference
 
-### `summarize_activity.py` — LLM-Powered Summaries
+All functionality is accessed through the `code-recap` command with subcommands:
+
+```
+code-recap <command> [options]
+
+Commands:
+  summarize, report    LLM-powered activity summaries (main command)
+  daily, today         Daily activity for time logging
+  stats, activity      Statistics without LLM (text/markdown/CSV)
+  html                 Convert markdown to HTML reports
+  blog                 Generate blog posts from commits
+  commits              List commits for a date
+  deploy               Deploy HTML reports
+  git, repos           Repository utilities (fetch, archive)
+```
+
+### `code-recap summarize` — LLM-Powered Summaries
 
 Generates narrative summaries of git activity using hierarchical LLM summarization.
 
 ```bash
-code-recap 2025 --author "Your Name"                    # All clients
-code-recap 2025 --author "Your Name" --client "Acme"    # Specific client
-code-recap 2025 --author "@company.com"                 # Match by email domain
-code-recap 2025 --author "Your Name" --dry-run          # Preview (no API cost)
+code-recap summarize 2025 --author "Your Name"                    # All clients
+code-recap summarize 2025 --author "Your Name" --client "Acme"    # Specific client
+code-recap summarize 2025 --author "@company.com"                 # Match by email domain
+code-recap summarize 2025 --author "Your Name" --html --open      # With HTML + open browser
+code-recap summarize 2025 --author "Your Name" --dry-run          # Preview (no API cost)
 ```
 
 | Option | Description | Default |
@@ -159,84 +174,86 @@ code-recap 2025 --author "Your Name" --dry-run          # Preview (no API cost)
 | `--model` | LLM model (see Recommended Models above) | `gpt-4o-mini` |
 | `--client` | Filter to specific client | All clients |
 | `--max-cost` | Budget limit in USD | `1.00` |
+| `--html` | Also generate HTML reports | `false` |
+| `--open` | Open HTML in browser (implies --html) | `false` |
 | `--dry-run` | Preview without API calls | `false` |
 
 ---
 
-### `summarize_daily_activity.py` — Daily Time Logging
+### `code-recap daily` — Daily Time Logging
 
 Generates concise summaries for a specific date—perfect for time tracking and billing.
 
 ```bash
-summarize-daily-activity --author "Your Name"                  # Today
-summarize-daily-activity --author "Your Name" --date yesterday
-summarize-daily-activity --author "Your Name" --date -2        # 2 days ago
-summarize-daily-activity --author "Your Name" --no-llm         # Just list commits
+code-recap daily --author "Your Name"                  # Today
+code-recap daily --author "Your Name" --date yesterday
+code-recap daily --author "Your Name" --date -2        # 2 days ago
+code-recap daily --author "Your Name" --no-llm         # Just list commits
 ```
 
 ---
 
-### `git_activity_review.py` — Statistics & CSV Export
+### `code-recap stats` — Statistics & CSV Export
 
 Generates detailed statistics with support for text, markdown, and CSV output.
 
 ```bash
-git-activity-review 2025 --author "Your Name"
-git-activity-review 2020:2025 --author "Your Name" --granularity year --format csv
-git-activity-review 2025-Q3 --author "Your Name" --format markdown
+code-recap stats 2025 --author "Your Name"
+code-recap stats 2020:2025 --author "Your Name" --granularity year --format csv
+code-recap stats 2025-Q3 --author "Your Name" --format markdown
 ```
 
 **Output includes:** commit counts, line changes, per-language breakdown, per-project stats, active days, and coding streaks.
 
 ---
 
-### `generate_blog_post.py` — AI Blog Post Generator
+### `code-recap blog` — AI Blog Post Generator
 
 Two-stage pipeline: research commits first, then generate a polished blog post.
 
 ```bash
 # Full pipeline
-generate-blog-post full "Building a Real-Time LED Controller" \
+code-recap blog full "Building a Real-Time LED Controller" \
     --period 2025-09 --author "Your Name"
 
 # Or step by step (allows editing research before writing)
-generate-blog-post research "My Topic" --period 2025-Q3 --author "Your Name"
-generate-blog-post write output/blog/my-topic/research.md
+code-recap blog research "My Topic" --period 2025-Q3 --author "Your Name"
+code-recap blog write output/blog/my-topic/research.md
 ```
 
 ---
 
-### `generate_html_report.py` — Branded HTML Reports
+### `code-recap html` — Branded HTML Reports
 
 Converts markdown summaries to styled HTML reports with your company branding.
 
 ```bash
-generate-html-report                       # Generate all HTML reports
-generate-html-report --client "Acme"       # Just one client
+code-recap html                       # Generate all HTML reports
+code-recap html --client "Acme"       # Just one client
 ```
 
 ---
 
-### `list_commits_by_date.py` — Daily Commit Log
+### `code-recap commits` — Daily Commit Log
 
 Lists all commits for a specific date across all repositories.
 
 ```bash
-list-commits-by-date 2025-01-03 --author "Your Name"
-list-commits-by-date $(date +%Y-%m-%d) --author "Your Name"  # Today
+code-recap commits 2025-01-03 --author "Your Name"
+code-recap commits $(date +%Y-%m-%d) --author "Your Name"  # Today
 ```
 
 ---
 
-### `git_utils.py` — Repository Management
+### `code-recap git` — Repository Management
 
 Utilities for managing multiple repositories.
 
 ```bash
-git-utils fetch                      # Fetch all repos in parallel
-git-utils archive --days 365         # Archive inactive repos (dry run)
-git-utils archive --days 365 --execute
-git-utils unarchive my-project --execute
+code-recap git fetch                      # Fetch all repos in parallel
+code-recap git archive --days 365         # Archive inactive repos (dry run)
+code-recap git archive --days 365 --execute
+code-recap git unarchive my-project --execute
 ```
 
 ---
@@ -339,14 +356,14 @@ source config/keys/all.sh
 ```bash
 cd ~/Documents/Repos/code-recap
 
-# Run scripts directly with uv (auto-installs dependencies)
-uv run summarize-activity 2024 --author "Your Name"
-uv run git-activity-review 2024 --author "Your Name"
-uv run list-commits-by-date 2024-01-15 --author "Your Name"
-uv run git-utils fetch
-
-# Or install as a tool
+# Install as a tool
 uv tool install .
+
+# Or run directly
+uv run code-recap summarize 2024 --author "Your Name"
+uv run code-recap stats 2024 --author "Your Name"
+uv run code-recap commits 2024-01-15 --author "Your Name"
+uv run code-recap git fetch
 ```
 
 ### Using pip
@@ -357,8 +374,8 @@ cd ~/Documents/Repos/code-recap
 # Install in development mode
 pip install -e .
 
-# Or just install dependencies
-pip install litellm
+# Then run
+code-recap summarize 2024 --author "Your Name"
 ```
 
 ### Development
