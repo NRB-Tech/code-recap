@@ -241,6 +241,7 @@ def init_config(argv: list[str]) -> int:
             created_files.append(str(output_path))
 
     # Set up API keys
+    keys_added = False
     if not args.no_keys:
         print("\n" + "=" * 50)
         print("API Key Setup (press Enter to skip any)")
@@ -251,8 +252,7 @@ def init_config(argv: list[str]) -> int:
         print("  Anthropic: https://console.anthropic.com/settings/keys")
         print()
 
-        keys_dir = Path("keys")
-        keys: dict[str, tuple[str, str]] = {}  # name -> (env_var, key)
+        keys: dict[str, str] = {}  # provider -> key
 
         # Prompt for each key
         for name, env_var, example in [
@@ -269,51 +269,69 @@ def init_config(argv: list[str]) -> int:
             try:
                 key = getpass.getpass(f"{name} API key ({example}): ").strip()
                 if key:
-                    keys[name.lower()] = (env_var, key)
+                    keys[name.lower()] = key
             except (KeyboardInterrupt, EOFError):
                 print("\nSkipping remaining keys...")
                 break
 
-        # Create key files if any keys were entered
+        # Add keys to config.yaml
         if keys:
-            keys_dir.mkdir(exist_ok=True)
+            # Read existing config or start fresh
+            if output_path.exists():
+                existing_content = output_path.read_text()
+            else:
+                existing_content = ""
 
-            for name, (env_var, key) in keys.items():
-                key_file = keys_dir / f"{name}.sh"
-                key_file.write_text(f"#!/bin/bash\nexport {env_var}='{key}'\n")
-                key_file.chmod(0o600)  # Restrict permissions
-                created_files.append(str(key_file))
+            # Check if api_keys section already exists
+            if "api_keys:" in existing_content:
+                # Update existing api_keys section using YAML
+                try:
+                    import yaml  # pyright: ignore[reportMissingModuleSource]
 
-            # Create all.sh to source all keys
-            all_file = keys_dir / "all.sh"
-            all_content = "#!/bin/bash\n# Source all API keys\n"
-            for name in keys:
-                all_content += f'source "$(dirname "$0")/{name}.sh"\n'
-            all_file.write_text(all_content)
-            all_file.chmod(0o700)
-            created_files.append(str(all_file))
+                    data = yaml.safe_load(existing_content) or {}
+                    if "api_keys" not in data:
+                        data["api_keys"] = {}
+                    data["api_keys"].update(keys)
 
-            print(f"\nCreated {len(keys)} key file(s) in {keys_dir}/")
-            print("To load keys: source keys/all.sh")
+                    # Write back, preserving comments if possible by appending
+                    with open(output_path, "w") as f:
+                        yaml.dump(data, f, default_flow_style=False, sort_keys=False)
+                    print(f"\nUpdated API keys in {output_path}")
+                except Exception as e:
+                    print(f"Warning: Could not update config: {e}", file=sys.stderr)
+            else:
+                # Append new api_keys section
+                api_keys_section = [
+                    "",
+                    "# API Keys (loaded automatically, env vars take precedence)",
+                    "api_keys:",
+                ]
+                for provider, key in keys.items():
+                    api_keys_section.append(f'  {provider}: "{key}"')
+                api_keys_section.append("")
 
-            # Add keys/ to .gitignore if not already
+                with open(output_path, "a") as f:
+                    f.write("\n".join(api_keys_section))
+                print(f"\nAdded API keys to {output_path}")
+
+            keys_added = True
+
+            # Remind about gitignore
             gitignore = Path(".gitignore")
+            config_pattern = str(output_path)
             if gitignore.exists():
                 content = gitignore.read_text()
-                if "keys/" not in content and "/keys" not in content:
-                    with gitignore.open("a") as f:
-                        f.write("\n# API keys\nkeys/\n")
-                    print("Added keys/ to .gitignore")
-
-    # Check if key files were created
-    keys_created = any("keys/" in f for f in created_files)
+                if config_pattern not in content and "config.yaml" not in content:
+                    print(f"Note: Consider adding {output_path} to .gitignore to protect API keys")
 
     # Summary
     print("\n" + "=" * 50)
-    if created_files:
-        print("Created files:")
+    if created_files or keys_added:
+        print("Setup complete:")
         for f in created_files:
-            print(f"  ✓ {f}")
+            print(f"  ✓ Created {f}")
+        if keys_added:
+            print(f"  ✓ API keys saved to {output_path}")
     else:
         print("No files created.")
 
@@ -322,13 +340,8 @@ def init_config(argv: list[str]) -> int:
     print("Next steps:")
     print("=" * 50)
 
-    if keys_created:
-        print("""
-# First, load your API keys
-source keys/all.sh
-""")
-
-    print("""# Generate a year-in-review summary
+    print("""
+# Generate a year-in-review summary
 code-recap summarize 2025 --open
 
 # Quick daily summary for time logging

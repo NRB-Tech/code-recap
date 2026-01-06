@@ -184,3 +184,74 @@ def is_installed_package() -> bool:
         True if installed via pip/uv, False if running from source.
     """
     return _is_installed_package()
+
+
+# API key environment variable names
+API_KEY_ENV_VARS = {
+    "openai": "OPENAI_API_KEY",
+    "anthropic": "ANTHROPIC_API_KEY",
+    "gemini": "GEMINI_API_KEY",
+}
+
+
+def load_api_keys_from_config(
+    config_path: Optional[Path] = None,
+    verbose: bool = False,
+) -> dict[str, str]:
+    """Loads API keys from config and sets them as environment variables.
+
+    Keys in the config file are only used if the corresponding environment
+    variable is not already set. This allows environment variables to override
+    config file values.
+
+    Args:
+        config_path: Path to config file. If None, uses get_config_path().
+        verbose: If True, print which keys were loaded.
+
+    Returns:
+        Dict of provider name to key that were loaded from config.
+    """
+    import os
+
+    if config_path is None:
+        config_path = get_config_path()
+
+    if not config_path.exists():
+        return {}
+
+    try:
+        import yaml  # pyright: ignore[reportMissingModuleSource]
+    except ImportError:
+        return {}
+
+    try:
+        with open(config_path) as f:
+            data = yaml.safe_load(f)
+    except Exception:
+        return {}
+
+    if not data or "api_keys" not in data:
+        return {}
+
+    api_keys_section = data["api_keys"]
+    if not isinstance(api_keys_section, dict):
+        return {}
+
+    loaded_keys: dict[str, str] = {}
+
+    for provider, env_var in API_KEY_ENV_VARS.items():
+        # Skip if environment variable is already set
+        if os.environ.get(env_var):
+            continue
+
+        # Check config for this provider's key
+        key = api_keys_section.get(provider)
+        if key and isinstance(key, str) and key.strip():
+            os.environ[env_var] = key.strip()
+            loaded_keys[provider] = key.strip()
+            if verbose:
+                import sys
+
+                print(f"Loaded {provider} API key from config", file=sys.stderr)
+
+    return loaded_keys

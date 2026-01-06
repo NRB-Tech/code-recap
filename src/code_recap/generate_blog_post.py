@@ -41,7 +41,7 @@ from code_recap.git_utils import (
     get_commits_with_diffs,
     run_git,
 )
-from code_recap.paths import get_config_path
+from code_recap.paths import get_config_path, load_api_keys_from_config
 from code_recap.summarize_activity import (
     RECOMMENDED_MODELS,
     CostTracker,
@@ -756,8 +756,9 @@ def cmd_research(args: argparse.Namespace) -> int:
 
     root = os.path.abspath(args.root)
 
-    # Load config
+    # Load config and API keys
     config_file = get_config_path(args.config)
+    load_api_keys_from_config(config_file)
     client_config, _ = load_config(str(config_file))
 
     global_context = ""
@@ -867,8 +868,9 @@ def cmd_write(args: argparse.Namespace) -> int:
         print(f"Error: Research file not found: {research_path}", file=sys.stderr)
         return 1
 
-    # Load config
+    # Load config and API keys
     config_file = get_config_path(args.config)
+    load_api_keys_from_config(config_file)
     client_config, _ = load_config(str(config_file))
 
     # Try to get context from metadata
@@ -937,8 +939,9 @@ def cmd_full(args: argparse.Namespace) -> int:
 
     root = os.path.abspath(args.root)
 
-    # Load config
+    # Load config and API keys
     config_file = get_config_path(args.config)
+    load_api_keys_from_config(config_file)
     client_config, _ = load_config(str(config_file))
 
     global_context = ""

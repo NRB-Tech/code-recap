@@ -3,6 +3,20 @@
 # Copy this to config/config.yaml and customize for your setup.
 
 # =============================================================================
+# API KEYS
+# =============================================================================
+# Store API keys here (environment variables take precedence if set).
+# Get keys from:
+#   OpenAI:    https://platform.openai.com/api-keys
+#   Gemini:    https://aistudio.google.com/apikey
+#   Anthropic: https://console.anthropic.com/settings/keys
+
+api_keys:
+  # openai: "sk-..."
+  # gemini: "AI..."
+  # anthropic: "sk-ant-..."
+
+# =============================================================================
 # COMPANY & CLIENT CONTEXT
 # =============================================================================
 

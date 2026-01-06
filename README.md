@@ -72,21 +72,24 @@ Run `code-recap` from a directory containing git repositories:
 
 **No configuration needed for basic use.** Just run the command and get a unified report.
 
-### For Consultants (Optional)
+### Configuration (Optional)
 
-If you work with multiple clients, create a `config.yaml` to organize reports by client (see [example config](config.example/config.yaml)):
+Create a `config.yaml` to customize behavior. Run `code-recap init` or see the [example config](config.example/config.yaml).
 
+**Client Grouping** — Organize reports by client with directory pattern matching:
 ```yaml
 clients:
   "Acme Corp":
-    directories:
-      - "acme-*"           # Matches acme-firmware, acme-ios, etc.
-  "Beta Inc":
-    directories:
-      - "beta-*"
+    directories: ["acme-*"]    # Glob patterns for repo names
 ```
 
-This creates separate reports per client in `code-recap-2025/acme_corp/`, etc.
+**Exclusion Patterns** — Skip files from line count statistics (build artifacts, generated code).
+
+**API Keys** — Store LLM API keys in config.yaml (or use environment variables).
+
+**HTML Styling** — Customize report branding, colors, and company logo.
+
+See [Configuration](#configuration) for full details.
 
 ---
 
@@ -335,32 +338,36 @@ projects:
     - "generated/*"
 ```
 
-### API Keys (`config/keys/`)
+### API Keys
 
-For LLM-powered scripts (`summarize_activity.py`, `generate_blog_post.py`), set API keys as environment variables:
+API keys can be configured in `config.yaml` (recommended) or via environment variables.
+
+**Option 1: Config file** (recommended)
+
+```yaml
+# In config.yaml
+api_keys:
+  openai: "sk-..."
+  gemini: "AI..."
+  anthropic: "sk-ant-..."
+```
+
+Run `code-recap init` to set up keys interactively.
+
+**Option 2: Environment variables**
+
+Environment variables take precedence over config file values:
 
 ```bash
-# OpenAI
 export OPENAI_API_KEY='sk-...'
-
-# Anthropic
-export ANTHROPIC_API_KEY='sk-ant-...'
-
-# Google Gemini
 export GEMINI_API_KEY='...'
+export ANTHROPIC_API_KEY='sk-ant-...'
 ```
 
-Or create key files in `config/keys/` and source them:
-```bash
-# Copy examples
-cp -r config.example/keys config/keys
-
-# Edit with your keys
-nano config/keys/openai.sh
-
-# Source all keys
-source config/keys/all.sh
-```
+Get keys from:
+- [OpenAI](https://platform.openai.com/api-keys)
+- [Google Gemini](https://aistudio.google.com/apikey)
+- [Anthropic](https://console.anthropic.com/settings/keys)
 
 ---
 

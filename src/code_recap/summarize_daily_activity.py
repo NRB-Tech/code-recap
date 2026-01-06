@@ -31,6 +31,7 @@ from code_recap.git_utils import (
     get_commits_with_diffs,
     run_git,
 )
+from code_recap.paths import load_api_keys_from_config
 
 # Default model
 DEFAULT_MODEL = "gpt-4o-mini"
@@ -474,6 +475,9 @@ Models (LiteLLM format):
     )
 
     args = parser.parse_args(argv)
+
+    # Load API keys from config (if available)
+    load_api_keys_from_config()
 
     resolve_author(args, parser)
 

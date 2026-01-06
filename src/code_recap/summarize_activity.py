@@ -55,6 +55,7 @@ from code_recap.git_utils import (
 from code_recap.paths import (
     get_config_path,
     get_output_dir,
+    load_api_keys_from_config,
 )
 
 # Default model (cheapest option)
@@ -1328,6 +1329,9 @@ Environment variables for API keys:
 
     # Load unified configuration
     config_file = get_config_path(args.config)
+
+    # Load API keys from config (if not already in environment)
+    load_api_keys_from_config(config_file)
 
     file_client_config, file_exclude_config, file_prompt_config = load_config(str(config_file))
     if file_client_config or file_exclude_config or file_prompt_config:

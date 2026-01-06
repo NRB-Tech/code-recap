@@ -513,6 +513,117 @@ a:hover {{
     padding: 2rem;
 }}
 
+/* Summary page cards on overview */
+.summary-cards {{
+    display: flex;
+    gap: 1.5rem;
+    max-width: 900px;
+    margin: 0 auto 3rem;
+    flex-wrap: wrap;
+}}
+
+.summary-card {{
+    flex: 1;
+    min-width: 280px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+}}
+
+.summary-card:hover {{
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-color: var(--accent-primary);
+}}
+
+.summary-card-icon {{
+    font-size: 2rem;
+    flex-shrink: 0;
+}}
+
+.summary-card-content {{
+    flex: 1;
+}}
+
+.summary-card-content h3 {{
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+    color: var(--text-primary);
+}}
+
+.summary-card-content p {{
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.4;
+}}
+
+.summary-card-arrow {{
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    transition: transform 0.2s ease;
+}}
+
+.summary-card:hover .summary-card-arrow {{
+    transform: translateX(4px);
+    color: var(--accent-primary);
+}}
+
+/* Page header for summary pages */
+.summary-page-header {{
+    text-align: center;
+    margin-bottom: 2rem;
+}}
+
+.summary-page-header h1 {{
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+}}
+
+.summary-page-header .badge {{
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}}
+
+.summary-page-header .badge.public {{
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}}
+
+.summary-page-header .badge.internal {{
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: white;
+}}
+
+.summary-back-link {{
+    display: inline-block;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}}
+
+.summary-back-link:hover {{
+    color: var(--accent-primary);
+    background: var(--surface);
+}}
+
 .clients-heading {{
     max-width: 900px;
     margin: 0 auto 1.5rem;
@@ -2224,25 +2335,34 @@ def generate_index_page(
     # Use year from either summary
     year = year_label or public_year
 
-    # Public summary section (for external/blog use)
-    public_section = ""
-    if public_html:
-        public_section = f"""
-        <div class="public-summary">
-            <div class="content">
-                {public_html}
-            </div>
-        </div>
-"""
+    # Summary links section - show cards linking to separate pages
+    summary_cards = ""
+    if public_html or internal_html:
+        cards = []
+        if public_html:
+            cards.append("""
+            <a href="public.html" class="summary-card public">
+                <div class="summary-card-icon">🌐</div>
+                <div class="summary-card-content">
+                    <h3>Public Report</h3>
+                    <p>Year in review suitable for blog posts, social media, and external sharing.</p>
+                </div>
+                <span class="summary-card-arrow">→</span>
+            </a>""")
+        if internal_html:
+            cards.append("""
+            <a href="internal.html" class="summary-card internal">
+                <div class="summary-card-icon">🔒</div>
+                <div class="summary-card-content">
+                    <h3>Internal Report</h3>
+                    <p>Detailed company overview with client breakdowns and metrics.</p>
+                </div>
+                <span class="summary-card-arrow">→</span>
+            </a>""")
 
-    # Internal summary section (for company use)
-    internal_section = ""
-    if internal_html:
-        internal_section = f"""
-        <div class="internal-summary">
-            <div class="content">
-                {internal_html}
-            </div>
+        summary_cards = f"""
+        <div class="summary-cards">
+            {''.join(cards)}
         </div>
 """
 
@@ -2258,8 +2378,7 @@ def generate_index_page(
                 and technical progress across all projects.
             </p>
         </div>
-{public_section}
-{internal_section}
+{summary_cards}
         <h2 class="clients-heading">Client Reports</h2>
         <div class="cards-grid">
 {cards_html}
@@ -2268,6 +2387,112 @@ def generate_index_page(
 
     return generate_html_page(
         title=title,
+        content=content,
+        nav_items=nav_items,
+        config=config,
+        client_name=None,
+    )
+
+
+def generate_public_summary_page(
+    public_summary: tuple[str, str],
+    clients: list[ClientData],
+    config: ReportConfig,
+) -> str:
+    """Generates the public-facing summary page.
+
+    Args:
+        public_summary: Tuple of (year_label, html_content).
+        clients: List of client data for navigation.
+        config: Report configuration.
+
+    Returns:
+        Complete HTML page string.
+    """
+    year, html_content = public_summary
+    if not html_content:
+        return ""
+
+    # Sort clients with "Other" always at the end
+    sorted_clients = sorted(clients, key=lambda c: (c.slug.lower() == "other", c.name.lower()))
+
+    nav_items = [("Overview", "index.html", False)]
+    for client in sorted_clients:
+        nav_items.append((client.name, f"{client.slug}/index.html", False))
+
+    content = f"""
+        <div class="summary-page-header">
+            <span class="badge public">Public Report</span>
+            <h1>{year} Year in Review</h1>
+            <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                Suitable for blog posts, social media, and external sharing
+            </p>
+        </div>
+        <div class="public-summary">
+            <div class="content">
+                {html_content}
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="index.html" class="summary-back-link">← Back to Overview</a>
+        </div>
+"""
+
+    return generate_html_page(
+        title=f"Public Report - {year}",
+        content=content,
+        nav_items=nav_items,
+        config=config,
+        client_name=None,
+    )
+
+
+def generate_internal_summary_page(
+    internal_summary: tuple[str, str],
+    clients: list[ClientData],
+    config: ReportConfig,
+) -> str:
+    """Generates the internal company summary page.
+
+    Args:
+        internal_summary: Tuple of (year_label, html_content).
+        clients: List of client data for navigation.
+        config: Report configuration.
+
+    Returns:
+        Complete HTML page string.
+    """
+    year, html_content = internal_summary
+    if not html_content:
+        return ""
+
+    # Sort clients with "Other" always at the end
+    sorted_clients = sorted(clients, key=lambda c: (c.slug.lower() == "other", c.name.lower()))
+
+    nav_items = [("Overview", "index.html", False)]
+    for client in sorted_clients:
+        nav_items.append((client.name, f"{client.slug}/index.html", False))
+
+    content = f"""
+        <div class="summary-page-header">
+            <span class="badge internal">Internal Report</span>
+            <h1>{year} Company Overview</h1>
+            <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                Detailed breakdown with client metrics (not for external sharing)
+            </p>
+        </div>
+        <div class="internal-summary">
+            <div class="content">
+                {html_content}
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="index.html" class="summary-back-link">← Back to Overview</a>
+        </div>
+"""
+
+    return generate_html_page(
+        title=f"Internal Report - {year}",
         content=content,
         nav_items=nav_items,
         config=config,
@@ -2671,6 +2896,22 @@ def generate_html_reports(
             if public_summary[1]:
                 print("Loaded public summary", file=sys.stderr)
             print("Generated: index.html", file=sys.stderr)
+
+        # Generate public summary page if available
+        if public_summary[1]:
+            public_html = generate_public_summary_page(public_summary, clients, config)
+            (output_dir / "public.html").write_text(public_html, encoding="utf-8")
+            pages_generated += 1
+            if verbose:
+                print("Generated: public.html", file=sys.stderr)
+
+        # Generate internal summary page if available
+        if internal_summary[1]:
+            internal_html = generate_internal_summary_page(internal_summary, clients, config)
+            (output_dir / "internal.html").write_text(internal_html, encoding="utf-8")
+            pages_generated += 1
+            if verbose:
+                print("Generated: internal.html", file=sys.stderr)
 
     for client in clients:
         if client_filter:
