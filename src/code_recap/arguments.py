@@ -6,6 +6,7 @@ reducing duplication across scripts.
 
 import argparse
 import sys
+from pathlib import Path
 from typing import Optional
 
 from code_recap.git_utils import get_git_config_author
@@ -124,6 +125,7 @@ def add_output_dir_arg(parser: argparse.ArgumentParser, help_text: Optional[str]
     """
     parser.add_argument(
         "--output-dir",
+        type=Path,
         default=None,
         help=help_text or f"Base output directory (default: {get_default_output_dir_name()}).",
     )
@@ -138,6 +140,7 @@ def add_input_dir_arg(parser: argparse.ArgumentParser, help_text: Optional[str] 
     """
     parser.add_argument(
         "--input-dir",
+        type=Path,
         default=None,
         help=help_text or "Input directory.",
     )
