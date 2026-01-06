@@ -14,6 +14,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from code_recap.paths import get_config_path, get_output_dir
+
 # Default configuration (generic - customize in config/config.yaml)
 DEFAULT_CONFIG = {
     "company": {
@@ -2686,25 +2688,26 @@ Configuration:
 
     args = parser.parse_args(argv)
 
-    script_dir = Path(__file__).parent
-    input_dir = args.input or (script_dir / "output")
-    config_path = args.config or (script_dir / "config" / "config.yaml")
+    # Use get_output_dir to get input dir (markdown summaries), and derive HTML output from it
+    base_output = get_output_dir(output_dir=None)
+    input_dir = args.input or base_output
+    config_path_resolved = get_config_path(str(args.config) if args.config else None)
 
     if args.output:
         output_dir = args.output
     elif args.client:
-        output_dir = script_dir / "output" / "html" / args.client
+        output_dir = base_output / "html" / args.client
     else:
-        output_dir = script_dir / "output" / "html"
+        output_dir = base_output / "html"
 
     if not input_dir.exists():
         print(f"Error: Input directory does not exist: {input_dir}", file=sys.stderr)
         return 1
 
     # Load configuration
-    config = load_config(config_path)
-    if config_path.exists():
-        print(f"Loaded config: {config_path}", file=sys.stderr)
+    config = load_config(config_path_resolved)
+    if config_path_resolved.exists():
+        print(f"Loaded config: {config_path_resolved}", file=sys.stderr)
 
     print(f"Input directory:  {input_dir}", file=sys.stderr)
     print(f"Output directory: {output_dir}", file=sys.stderr)

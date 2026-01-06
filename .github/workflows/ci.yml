@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+
+      - name: Run ruff check
+        run: ruff check src/
+
+      - name: Run ruff format check
+        run: ruff format --check src/
+
+  build:
+    name: Build & Test Install
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Test CLI entry points
+        run: |
+          code-recap --help
+          git-activity-review --help
+          summarize-daily-activity --help
+          generate-html-report --help
+          list-commits-by-date --help
+          git-utils --help
+
+      - name: Test imports
+        run: |
+          python -c "from code_recap import __version__; print(f'Version: {__version__}')"
+          python -c "from code_recap.paths import get_output_dir, get_config_path; print('Paths module OK')"

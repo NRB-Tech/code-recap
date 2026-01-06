@@ -25,6 +25,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from code_recap.paths import get_config_path, get_output_dir
+
 # Default configuration
 DEFAULT_CONFIG = {
     "deploy": {
@@ -655,13 +657,13 @@ Available providers:
     parser.add_argument(
         "--input",
         "-i",
-        default="output/html",
-        help="Input HTML directory (default: output/html)",
+        default=None,
+        help="Input HTML directory (default: derived from output dir)",
     )
     parser.add_argument(
         "--config",
-        default="config/config.yaml",
-        help="Path to config file (default: config/config.yaml)",
+        default=None,
+        help="Path to config file (default: ./config/config.yaml or ~/.config/code-recap/)",
     )
     parser.add_argument(
         "--verbose",
@@ -687,14 +689,14 @@ Available providers:
         parser.error("Either --client or --all is required")
 
     # Load config
-    config_path = Path(args.config)
+    config_path = get_config_path(args.config)
     config = load_config(config_path)
 
     if args.verbose:
         print(f"Config: {config_path}", file=sys.stderr)
 
     # Find client directories
-    html_dir = Path(args.input)
+    html_dir = Path(args.input) if args.input else get_output_dir(subdir="html")
     client_dirs = find_client_dirs(html_dir, args.client if not args.all else None)
 
     if not client_dirs:

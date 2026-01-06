@@ -17,19 +17,17 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Optional
 
-from git_utils import (
+from code_recap.git_utils import (
     CommitInfo,
     discover_all_submodules,
     discover_top_level_repos,
     get_commits_with_diffs,
     run_git,
 )
+from code_recap.paths import get_config_path
 
 # Default model
 DEFAULT_MODEL = "gpt-4o-mini"
-
-# Default config file
-DEFAULT_CONFIG_FILE = "config/config.yaml"
 
 
 @dataclass

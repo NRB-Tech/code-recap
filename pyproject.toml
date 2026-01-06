@@ -60,6 +60,7 @@ list-commits-by-date = "code_recap.list_commits_by_date:main"
 generate-html-report = "code_recap.generate_html_report:main"
 deploy-reports = "code_recap.deploy_reports:main"
 generate-blog-post = "code_recap.generate_blog_post:main"
+git-utils = "code_recap.git_utils:main"
 
 [build-system]
 requires = ["hatchling"]

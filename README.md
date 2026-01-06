@@ -93,20 +93,26 @@ This creates separate reports per client in `output/acme_corp/`, `output/beta_in
 ## Quick Start
 
 ```bash
-# Install
+# Install from PyPI
+pip install code-recap
+
+# Or install from source
 pip install -e .
-cp -r config.example/* config/
+
+# (Optional) Configure for multi-client use
+mkdir -p config && cp -r config.example/* config/
 
 # Set API key (choose one)
 export OPENAI_API_KEY='sk-...'      # For GPT-4o-mini
 export GEMINI_API_KEY='...'         # For Gemini Flash
 export ANTHROPIC_API_KEY='sk-...'   # For Claude Haiku
 
-# Generate 2025 year-in-review for all clients
-./summarize_activity.py 2025 --author "Your Name"
+# Generate 2025 year-in-review
+code-recap 2025 --author "Your Name"
+# → Output: ./code-recap-2025/
 
 # Convert to HTML reports
-./generate_html_report.py
+generate-html-report
 ```
 
 That's it! Find your reports in `output/html/`.
@@ -127,9 +133,9 @@ Code Recap uses [LiteLLM](https://docs.litellm.ai/) to support multiple LLM prov
 
 ```bash
 # Examples
-./summarize_activity.py 2025 --author "Your Name"                              # Uses default (GPT-4o-mini)
-./summarize_activity.py 2025 --author "Your Name" --model gemini/gemini-2.0-flash
-./summarize_activity.py --list-models                                           # See all available models
+code-recap 2025 --author "Your Name"                              # Uses default (GPT-4o-mini)
+code-recap 2025 --author "Your Name" --model gemini/gemini-2.0-flash
+code-recap --list-models                                           # See all available models
 ```
 
 ---
@@ -141,10 +147,10 @@ Code Recap uses [LiteLLM](https://docs.litellm.ai/) to support multiple LLM prov
 Generates narrative summaries of git activity using hierarchical LLM summarization.
 
 ```bash
-./summarize_activity.py 2025 --author "Your Name"                    # All clients
-./summarize_activity.py 2025 --author "Your Name" --client "Acme"    # Specific client
-./summarize_activity.py 2025 --author "@company.com"                 # Match by email domain
-./summarize_activity.py 2025 --author "Your Name" --dry-run          # Preview (no API cost)
+code-recap 2025 --author "Your Name"                    # All clients
+code-recap 2025 --author "Your Name" --client "Acme"    # Specific client
+code-recap 2025 --author "@company.com"                 # Match by email domain
+code-recap 2025 --author "Your Name" --dry-run          # Preview (no API cost)
 ```
 
 | Option | Description | Default |
@@ -162,10 +168,10 @@ Generates narrative summaries of git activity using hierarchical LLM summarizati
 Generates concise summaries for a specific date—perfect for time tracking and billing.
 
 ```bash
-./summarize_daily_activity.py --author "Your Name"                  # Today
-./summarize_daily_activity.py --author "Your Name" --date yesterday
-./summarize_daily_activity.py --author "Your Name" --date -2        # 2 days ago
-./summarize_daily_activity.py --author "Your Name" --no-llm         # Just list commits
+summarize-daily-activity --author "Your Name"                  # Today
+summarize-daily-activity --author "Your Name" --date yesterday
+summarize-daily-activity --author "Your Name" --date -2        # 2 days ago
+summarize-daily-activity --author "Your Name" --no-llm         # Just list commits
 ```
 
 ---
@@ -175,9 +181,9 @@ Generates concise summaries for a specific date—perfect for time tracking and 
 Generates detailed statistics with support for text, markdown, and CSV output.
 
 ```bash
-./git_activity_review.py 2025 --author "Your Name"
-./git_activity_review.py 2020:2025 --author "Your Name" --granularity year --format csv
-./git_activity_review.py 2025-Q3 --author "Your Name" --format markdown
+git-activity-review 2025 --author "Your Name"
+git-activity-review 2020:2025 --author "Your Name" --granularity year --format csv
+git-activity-review 2025-Q3 --author "Your Name" --format markdown
 ```
 
 **Output includes:** commit counts, line changes, per-language breakdown, per-project stats, active days, and coding streaks.
@@ -190,12 +196,12 @@ Two-stage pipeline: research commits first, then generate a polished blog post.
 
 ```bash
 # Full pipeline
-./generate_blog_post.py full "Building a Real-Time LED Controller" \
+generate-blog-post full "Building a Real-Time LED Controller" \
     --period 2025-09 --author "Your Name"
 
 # Or step by step (allows editing research before writing)
-./generate_blog_post.py research "My Topic" --period 2025-Q3 --author "Your Name"
-./generate_blog_post.py write output/blog/my-topic/research.md
+generate-blog-post research "My Topic" --period 2025-Q3 --author "Your Name"
+generate-blog-post write output/blog/my-topic/research.md
 ```
 
 ---
@@ -205,8 +211,8 @@ Two-stage pipeline: research commits first, then generate a polished blog post.
 Converts markdown summaries to styled HTML reports with your company branding.
 
 ```bash
-./generate_html_report.py                       # Generate all HTML reports
-./generate_html_report.py --client "Acme"       # Just one client
+generate-html-report                       # Generate all HTML reports
+generate-html-report --client "Acme"       # Just one client
 ```
 
 ---
@@ -216,8 +222,8 @@ Converts markdown summaries to styled HTML reports with your company branding.
 Lists all commits for a specific date across all repositories.
 
 ```bash
-./list_commits_by_date.py 2025-01-03 --author "Your Name"
-./list_commits_by_date.py $(date +%Y-%m-%d) --author "Your Name"  # Today
+list-commits-by-date 2025-01-03 --author "Your Name"
+list-commits-by-date $(date +%Y-%m-%d) --author "Your Name"  # Today
 ```
 
 ---
@@ -227,10 +233,10 @@ Lists all commits for a specific date across all repositories.
 Utilities for managing multiple repositories.
 
 ```bash
-./git_utils.py fetch                      # Fetch all repos in parallel
-./git_utils.py archive --days 365         # Archive inactive repos (dry run)
-./git_utils.py archive --days 365 --execute
-./git_utils.py unarchive my-project --execute
+git-utils fetch                      # Fetch all repos in parallel
+git-utils archive --days 365         # Archive inactive repos (dry run)
+git-utils archive --days 365 --execute
+git-utils unarchive my-project --execute
 ```
 
 ---

@@ -8,11 +8,12 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Optional
 
-from git_utils import (
+from code_recap.git_utils import (
     discover_all_submodules,
     discover_top_level_repos,
     run_git,
 )
+from code_recap.paths import get_default_output_dir_name, get_output_dir
 
 
 @dataclass
@@ -383,8 +384,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     parser.add_argument(
         "--output-dir",
-        default="output",
-        help="Base output directory (default: output/).",
+        default=None,
+        help=f"Base output directory (default: {get_default_output_dir_name()}).",
     )
 
     args = parser.parse_args(argv)
@@ -445,16 +446,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         output()
 
     # Determine output path
-    import re
-
     if args.output:
         output_path = args.output
     elif args.save:
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        output_dir = os.path.join(script_dir, args.output_dir)
-        if args.client:
-            client_safe = re.sub(r"[^\w\-]", "_", args.client.lower())
-            output_dir = os.path.join(output_dir, client_safe)
+        output_dir_path = get_output_dir(
+            output_dir=args.output_dir,
+            period=args.date[:7],  # Use year-month as period
+            client=args.client,
+        )
+        output_dir = str(output_dir_path)
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, f"commits-{args.date}.txt")
     else:

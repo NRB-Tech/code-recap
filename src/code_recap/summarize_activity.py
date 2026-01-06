@@ -19,7 +19,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Optional
 
-from git_activity_review import (
+from code_recap.git_activity_review import (
     DEFAULT_EXCLUDE_PATTERNS,
     ExcludeConfig,
     LanguageStats,
@@ -34,7 +34,7 @@ from git_activity_review import (
     parse_range,
     process_repos_for_period,
 )
-from git_utils import (
+from code_recap.git_utils import (
     CommitInfo,
     discover_all_submodules,
     discover_top_level_repos,
@@ -42,12 +42,10 @@ from git_utils import (
     get_commit_messages,
     get_commits_with_diffs,
 )
+from code_recap.paths import get_config_path, get_default_output_dir_name, get_output_dir
 
 # Default model (cheapest option)
 DEFAULT_MODEL = "gpt-4o-mini"
-
-# Default config file
-DEFAULT_CONFIG_FILE = "config/config.yaml"
 
 
 @dataclass
@@ -1187,7 +1185,7 @@ Environment variables for API keys:
     parser.add_argument(
         "--config",
         metavar="FILE",
-        help=f"Path to config.yaml file (default: {DEFAULT_CONFIG_FILE} in script dir).",
+        help="Path to config.yaml file (default: ./config/config.yaml or ~/.config/code-recap/).",
     )
     parser.add_argument(
         "--no-client-grouping",
@@ -1260,8 +1258,8 @@ Environment variables for API keys:
     )
     parser.add_argument(
         "--output-dir",
-        default="output",
-        help="Base output directory (default: output/).",
+        default=None,
+        help=f"Base output directory (default: {get_default_output_dir_name()}).",
     )
     parser.add_argument(
         "--no-fetch",
@@ -1318,10 +1316,9 @@ Environment variables for API keys:
     include_diffs = args.include_diffs and not args.no_diffs
 
     # Load unified configuration
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    config_file = args.config or os.path.join(script_dir, DEFAULT_CONFIG_FILE)
+    config_file = get_config_path(args.config)
 
-    file_client_config, file_exclude_config, file_prompt_config = load_config(config_file)
+    file_client_config, file_exclude_config, file_prompt_config = load_config(str(config_file))
     if file_client_config or file_exclude_config or file_prompt_config:
         print(f"Loaded config from: {config_file}", file=sys.stderr)
 
@@ -1605,12 +1602,12 @@ Environment variables for API keys:
             save_period_summaries = False
         else:
             # Default: save to output directory with sensible names
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            output_dir = os.path.join(script_dir, args.output_dir)
-            if client_name:
-                # Sanitize client name for directory
-                client_safe = re.sub(r"[^\w\-]", "_", client_name.lower())
-                output_dir = os.path.join(output_dir, client_safe)
+            output_dir_path = get_output_dir(
+                output_dir=args.output_dir,
+                period=args.period.split(":")[0] if ":" in args.period else args.period,
+                client=client_name,
+            )
+            output_dir = str(output_dir_path)
 
             os.makedirs(output_dir, exist_ok=True)
 
@@ -1736,8 +1733,11 @@ Environment variables for API keys:
         )
 
         # Save internal summary
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        internal_dir = os.path.join(script_dir, args.output_dir)
+        internal_dir_path = get_output_dir(
+            output_dir=args.output_dir,
+            period=args.period.split(":")[0] if ":" in args.period else args.period,
+        )
+        internal_dir = str(internal_dir_path)
         os.makedirs(internal_dir, exist_ok=True)
         internal_path = os.path.join(
             internal_dir, f"internal-summary-{args.period.replace(':', '-to-')}.md"

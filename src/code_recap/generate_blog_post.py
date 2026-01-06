@@ -20,11 +20,11 @@ import sys
 from dataclasses import dataclass
 from typing import Optional
 
-from git_activity_review import (
+from code_recap.git_activity_review import (
     date_range_to_git_args,
     parse_period,
 )
-from git_utils import (
+from code_recap.git_utils import (
     CommitInfo,
     discover_all_submodules,
     discover_top_level_repos,
@@ -40,10 +40,9 @@ from summarize_activity import (
 )
 
 # Default model
-DEFAULT_MODEL = "gpt-4o-mini"
+from code_recap.paths import get_config_path
 
-# Default config file
-DEFAULT_CONFIG_FILE = "config/config.yaml"
+DEFAULT_MODEL = "gpt-4o-mini"
 
 # Research stage system prompt
 RESEARCH_SYSTEM_PROMPT = """You are an expert software developer analyzing git commits to research material for a blog post.
@@ -704,7 +703,7 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--config",
         metavar="FILE",
-        help=f"Path to config.yaml file (default: {DEFAULT_CONFIG_FILE} in script dir).",
+        help="Path to config.yaml file (default: ./config/config.yaml or ~/.config/code-recap/).",
     )
 
 
@@ -782,9 +781,8 @@ def cmd_research(args: argparse.Namespace) -> int:
     root = os.path.abspath(args.root)
 
     # Load config
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    config_file = args.config or os.path.join(script_dir, DEFAULT_CONFIG_FILE)
-    client_config, _ = load_config(config_file)
+    config_file = get_config_path(args.config)
+    client_config, _ = load_config(str(config_file))
 
     global_context = ""
     client_context = ""
@@ -961,9 +959,8 @@ def cmd_full(args: argparse.Namespace) -> int:
     root = os.path.abspath(args.root)
 
     # Load config
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    config_file = args.config or os.path.join(script_dir, DEFAULT_CONFIG_FILE)
-    client_config, _ = load_config(config_file)
+    config_file = get_config_path(args.config)
+    client_config, _ = load_config(str(config_file))
 
     global_context = ""
     client_context = ""

@@ -17,12 +17,13 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Optional
 
-from git_utils import (
+from code_recap.git_utils import (
     discover_all_submodules,
     discover_top_level_repos,
     fetch_repos_with_progress,
     run_git,
 )
+from code_recap.paths import get_config_path, get_default_output_dir_name, get_output_dir
 
 # Extension to language name mapping
 EXTENSION_LANGUAGE_MAP: dict[str, str] = {
@@ -235,8 +236,6 @@ DEFAULT_EXCLUDE_PATTERNS: list[str] = [
     "*.css.map",
 ]
 
-# Default path for config file (relative to script directory)
-DEFAULT_CONFIG_FILE = "config/config.yaml"
 # Legacy excludes file path (for backwards compatibility)
 DEFAULT_EXCLUDES_FILE = "config/excludes.yaml"
 
@@ -1473,8 +1472,8 @@ Examples:
     )
     parser.add_argument(
         "--output-dir",
-        default="output",
-        help="Base output directory (default: output/).",
+        default=None,
+        help=f"Base output directory (default: {get_default_output_dir_name()}).",
     )
     parser.add_argument(
         "--exclude",
@@ -1537,8 +1536,6 @@ Examples:
 
     # Load excludes file
     if not args.no_excludes_file:
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-
         if args.excludes_file:
             # Explicit excludes file specified
             excludes_file = args.excludes_file
@@ -1552,9 +1549,9 @@ Examples:
                 print(f"Loaded excludes from: {excludes_file}", file=sys.stderr)
         else:
             # Try unified config first, fall back to legacy excludes file
-            config_file = os.path.join(script_dir, DEFAULT_CONFIG_FILE)
-            if os.path.isfile(config_file):
-                file_config = load_excludes_from_config(config_file)
+            config_file = get_config_path()
+            if config_file.exists():
+                file_config = load_excludes_from_config(str(config_file))
                 if file_config.global_patterns or file_config.project_patterns:
                     exclude_config.global_patterns.extend(file_config.global_patterns)
                     for project, patterns in file_config.project_patterns.items():
@@ -1564,15 +1561,15 @@ Examples:
                     print(f"Loaded excludes from: {config_file}", file=sys.stderr)
             else:
                 # Fall back to legacy excludes file
-                excludes_file = os.path.join(script_dir, DEFAULT_EXCLUDES_FILE)
-                if os.path.isfile(excludes_file):
-                    file_config = load_excludes_file(excludes_file)
+                legacy_excludes = config_file.parent / "excludes.yaml"
+                if legacy_excludes.exists():
+                    file_config = load_excludes_file(str(legacy_excludes))
                     exclude_config.global_patterns.extend(file_config.global_patterns)
                     for project, patterns in file_config.project_patterns.items():
                         if project not in exclude_config.project_patterns:
                             exclude_config.project_patterns[project] = []
                         exclude_config.project_patterns[project].extend(patterns)
-                    print(f"Loaded excludes from: {excludes_file}", file=sys.stderr)
+                    print(f"Loaded excludes from: {legacy_excludes}", file=sys.stderr)
 
     # Discover repositories
     repos = discover_top_level_repos(root)
@@ -1659,11 +1656,12 @@ Examples:
         output_path = None
     else:
         # Default: save to output directory with sensible name
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        output_dir = os.path.join(script_dir, args.output_dir)
-        if args.client:
-            client_safe = re.sub(r"[^\w\-]", "_", args.client.lower())
-            output_dir = os.path.join(output_dir, client_safe)
+        output_dir_path = get_output_dir(
+            output_dir=args.output_dir,
+            period=args.period.split(":")[0] if ":" in args.period else args.period,
+            client=args.client,
+        )
+        output_dir = str(output_dir_path)
 
         os.makedirs(output_dir, exist_ok=True)
 
