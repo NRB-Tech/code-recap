@@ -125,9 +125,9 @@ Code Recap uses [LiteLLM](https://docs.litellm.ai/) to support multiple LLM prov
 | Model | Command | Best For | Cost |
 |-------|---------|----------|------|
 | **GPT-4o-mini** | `--model gpt-4o-mini` | Default choice, reliable and fast | ~$0.15/year |
-| **Gemini 2.0 Flash** | `--model gemini/gemini-2.0-flash` | Large codebases (1M context), very fast | ~$0.05/year |
-| **Gemini 3.0 Flash Preview** | `--model gemini/gemini-3-flash-preview` | Latest Gemini model, very fast | ~$0.50/year |
-| **Claude Haiku** | `--model anthropic/claude-4-5-haiku-latest` | Best writing quality for summaries | ~$0.30/year |
+| **Gemini 2.5 Flash** | `--model gemini/gemini-2.5-flash` | Large codebases (1M context), very fast | ~$0.10/year |
+| **Gemini 3 Flash** | `--model gemini/gemini-3-flash` | Latest Gemini model | ~$0.50/year |
+| **Claude 4 Haiku** | `--model anthropic/claude-4-haiku` | Best writing quality for summaries | ~$0.30/year |
 
 *Costs shown are approximate for summarizing 1 year of typical developer activity (~3000 commits).*
 

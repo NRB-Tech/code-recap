@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `docs/deployment.md` — Deployment guide
   - `docs/extending.md` — Guide for implementing custom deployment providers
 
+### Changed
+- Updated recommended models list with latest versions (GPT-5.2, Claude 4.5, Gemini 3)
+
 ## [1.1.1] - 2026-01-06
 
 ### Added

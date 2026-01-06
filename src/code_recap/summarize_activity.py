@@ -424,21 +424,21 @@ def load_config(
 RECOMMENDED_MODELS = {
     "openai": [
         ("gpt-4o-mini", "Cheapest, good for most tasks"),
-        ("gpt-4o", "More capable, higher cost"),
-        ("gpt-4.1-mini", "Latest mini model"),
-        ("gpt-4.1", "Latest flagship model"),
+        ("gpt-4o", "Capable, moderate cost"),
+        ("gpt-5.2-mini", "Latest mini model"),
+        ("gpt-5.2", "Latest flagship model"),
     ],
     "anthropic": [
-        ("anthropic/claude-3-5-haiku-latest", "Cheapest Claude, fast"),
-        ("anthropic/claude-3-5-sonnet-latest", "Balanced performance"),
-        ("anthropic/claude-3-7-sonnet-latest", "Latest Sonnet"),
-        ("anthropic/claude-3-opus-latest", "Most capable Claude"),
+        ("anthropic/claude-4-haiku", "Cheapest Claude, fast"),
+        ("anthropic/claude-4-sonnet", "Balanced performance"),
+        ("anthropic/claude-4.5-sonnet", "Latest Sonnet"),
+        ("anthropic/claude-4.5-opus", "Most capable Claude"),
     ],
     "gemini": [
         ("gemini/gemini-2.0-flash-lite", "Cheapest Gemini"),
-        ("gemini/gemini-2.0-flash", "Good balance, 1M context"),
-        ("gemini/gemini-2.5-flash", "Latest stable Flash"),
-        ("gemini/gemini-2.5-pro", "Most capable Gemini"),
+        ("gemini/gemini-2.5-flash", "Good balance, 1M context"),
+        ("gemini/gemini-3-flash", "Latest Flash"),
+        ("gemini/gemini-3-pro", "Most capable Gemini"),
     ],
 }
 
