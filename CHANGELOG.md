@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Pre-commit hooks for ruff linting and formatting
+
 ## [1.1.1] - 2026-01-06
 
 ### Added
