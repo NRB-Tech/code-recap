@@ -76,6 +76,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         return git_main(sub_argv)
 
+    elif subcommand in ("init", "config"):
+        return init_config(sub_argv)
+
     elif subcommand == "help":
         if sub_argv:
             # Show help for specific subcommand
@@ -87,6 +90,215 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"Unknown subcommand: {subcommand}", file=sys.stderr)
         print("Run 'code-recap --help' for available commands.", file=sys.stderr)
         return 1
+
+
+def init_config(argv: list[str]) -> int:
+    """Creates config files and sets up API keys.
+
+    Args:
+        argv: Command-line arguments.
+
+    Returns:
+        Exit code.
+    """
+    import argparse
+    import getpass
+    import os
+    from pathlib import Path
+
+    parser = argparse.ArgumentParser(
+        prog="code-recap init",
+        description="Initialize code-recap configuration and API keys",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        default="config.yaml",
+        help="Config file path (default: config.yaml)",
+    )
+    parser.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="Overwrite existing files",
+    )
+    parser.add_argument(
+        "--no-keys",
+        action="store_true",
+        help="Skip API key setup",
+    )
+    parser.add_argument(
+        "--keys-only",
+        action="store_true",
+        help="Only set up API keys, skip config.yaml",
+    )
+    args = parser.parse_args(argv)
+
+    output_path = Path(args.output)
+    created_files: list[str] = []
+
+    # Create config.yaml
+    if not args.keys_only:
+        if output_path.exists() and not args.force:
+            print(f"Config file {output_path} already exists (use --force to overwrite)")
+        else:
+            template = """# Code Recap Configuration
+# See: https://github.com/NRB-Tech/code-recap
+
+# Global context for LLM summaries (optional)
+# global_context: |
+#   Brief description of your work or company for context in summaries.
+
+# Client configuration (optional - for consultants with multiple clients)
+# clients:
+#   "Client Name":
+#     directories:
+#       - "project-*"      # Glob patterns for repo names
+#       - "another-repo"   # Exact match
+#     exclude:
+#       - "*-archive"      # Exclude patterns
+#     context: |
+#       Brief description of work for this client.
+#
+#   "Another Client":
+#     directories:
+#       - "client2-*"
+
+# Assign unmatched repos to a default client (optional)
+# default_client: Personal
+
+# File patterns to exclude from statistics (optional)
+# excludes:
+#   global:
+#     - "*.lock"
+#     - "package-lock.json"
+#     - "*/node_modules/*"
+#     - "*/build/*"
+#     - "*.min.js"
+#   projects:
+#     MyProject:
+#       - "vendor/*"
+
+# HTML report branding (optional)
+# html_report:
+#   company_name: "Your Company"
+#   logo_url: "https://example.com/logo.png"
+#   primary_color: "#2563eb"
+"""
+            output_path.write_text(template)
+            created_files.append(str(output_path))
+
+    # Set up API keys
+    if not args.no_keys:
+        print("\n" + "=" * 50)
+        print("API Key Setup (press Enter to skip any)")
+        print("=" * 50)
+        print("\nGet API keys from:")
+        print("  OpenAI:    https://platform.openai.com/api-keys")
+        print("  Gemini:    https://aistudio.google.com/apikey")
+        print("  Anthropic: https://console.anthropic.com/settings/keys")
+        print()
+
+        keys_dir = Path("keys")
+        keys: dict[str, tuple[str, str]] = {}  # name -> (env_var, key)
+
+        # Prompt for each key
+        for name, env_var, example in [
+            ("OpenAI", "OPENAI_API_KEY", "sk-..."),
+            ("Gemini", "GEMINI_API_KEY", "AI..."),
+            ("Anthropic", "ANTHROPIC_API_KEY", "sk-ant-..."),
+        ]:
+            # Check if already set in environment
+            existing = os.environ.get(env_var)
+            if existing:
+                print(f"{name}: Already set in environment ✓")
+                continue
+
+            try:
+                key = getpass.getpass(f"{name} API key ({example}): ").strip()
+                if key:
+                    keys[name.lower()] = (env_var, key)
+            except (KeyboardInterrupt, EOFError):
+                print("\nSkipping remaining keys...")
+                break
+
+        # Create key files if any keys were entered
+        if keys:
+            keys_dir.mkdir(exist_ok=True)
+
+            for name, (env_var, key) in keys.items():
+                key_file = keys_dir / f"{name}.sh"
+                key_file.write_text(f"#!/bin/bash\nexport {env_var}='{key}'\n")
+                key_file.chmod(0o600)  # Restrict permissions
+                created_files.append(str(key_file))
+
+            # Create all.sh to source all keys
+            all_file = keys_dir / "all.sh"
+            all_content = "#!/bin/bash\n# Source all API keys\n"
+            for name in keys:
+                all_content += f'source "$(dirname "$0")/{name}.sh"\n'
+            all_file.write_text(all_content)
+            all_file.chmod(0o700)
+            created_files.append(str(all_file))
+
+            print(f"\nCreated {len(keys)} key file(s) in {keys_dir}/")
+            print("To load keys: source keys/all.sh")
+
+            # Add keys/ to .gitignore if not already
+            gitignore = Path(".gitignore")
+            if gitignore.exists():
+                content = gitignore.read_text()
+                if "keys/" not in content and "/keys" not in content:
+                    with gitignore.open("a") as f:
+                        f.write("\n# API keys\nkeys/\n")
+                    print("Added keys/ to .gitignore")
+
+    # Summary
+    print("\n" + "=" * 50)
+    if created_files:
+        print("Created files:")
+        for f in created_files:
+            print(f"  ✓ {f}")
+    else:
+        print("No files created.")
+
+    # Get author name for examples
+    author = _get_git_author() or "Your Name"
+
+    # Next steps
+    print("\n" + "=" * 50)
+    print("Try these commands:")
+    print("=" * 50)
+    print(f"""
+# Generate a year-in-review summary
+code-recap summarize 2025 --author "{author}" --html --open
+
+# Quick daily summary for time logging
+code-recap daily --author "{author}"
+
+# Statistics only (no LLM, no API key needed)
+code-recap stats 2025 --author "{author}" --format markdown
+""")
+    print("Documentation: https://github.com/NRB-Tech/code-recap")
+    return 0
+
+
+def _get_git_author() -> str | None:
+    """Gets the git user name from config."""
+    import subprocess
+
+    try:
+        result = subprocess.run(
+            ["git", "config", "user.name"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except Exception:
+        pass
+    return None
 
 
 def print_help() -> None:
@@ -106,6 +318,7 @@ Commands:
   commits              List commits for a specific date
   deploy               Deploy HTML reports (zip, Cloudflare)
   git, repos           Repository utilities (fetch, archive)
+  init                 Create a template config.yaml file
 
 Quick start:
   code-recap summarize 2025 --author "Your Name"

@@ -71,17 +71,23 @@ echo "✓ Updated pyproject.toml"
 sed -i '' "s/__version__ = \".*\"/__version__ = \"$NEW_VERSION\"/" src/code_recap/__init__.py
 echo "✓ Updated src/code_recap/__init__.py"
 
+# Update uv.lock
+if command -v uv &> /dev/null; then
+    uv lock --quiet
+    echo "✓ Updated uv.lock"
+fi
+
 # Show changes
 echo ""
 echo "Changes:"
-git diff --color pyproject.toml src/code_recap/__init__.py
+git diff --color pyproject.toml src/code_recap/__init__.py uv.lock
 
 echo ""
 read -p "Commit and tag v$NEW_VERSION? [y/N] " -n 1 -r
 echo
 
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    git add pyproject.toml src/code_recap/__init__.py
+    git add pyproject.toml src/code_recap/__init__.py uv.lock
     git commit -m "Bump version to $NEW_VERSION"
     git tag -a "v$NEW_VERSION" -m "Release v$NEW_VERSION"
     
@@ -92,8 +98,10 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "  git push && git push origin v$NEW_VERSION"
 else
     echo ""
-    echo "Changes staged but not committed. To finish manually:"
-    echo "  git add -A && git commit -m 'Bump version to $NEW_VERSION'"
+    echo "Aborted. Files were modified but not committed."
+    echo "To finish manually:"
+    echo "  git add pyproject.toml src/code_recap/__init__.py uv.lock"
+    echo "  git commit -m 'Bump version to $NEW_VERSION'"
     echo "  git tag -a v$NEW_VERSION -m 'Release v$NEW_VERSION'"
     echo "  git push && git push origin v$NEW_VERSION"
 fi

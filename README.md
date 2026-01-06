@@ -74,7 +74,7 @@ Run `code-recap` from a directory containing git repositories:
 
 ### For Consultants (Optional)
 
-If you work with multiple clients, configure `config/config.yaml` to organize reports by client:
+If you work with multiple clients, create a `config.yaml` to organize reports by client (see [example config](config.example/config.yaml)):
 
 ```yaml
 clients:
@@ -93,12 +93,13 @@ This creates separate reports per client in `code-recap-2025/acme_corp/`, etc.
 ## Quick Start
 
 ```bash
-# Set API key (choose one)
-export OPENAI_API_KEY='sk-...'      # For GPT-4o-mini
-export GEMINI_API_KEY='...'         # For Gemini Flash
-export ANTHROPIC_API_KEY='sk-...'   # For Claude Haiku
+# Initialize (creates config, prompts for API keys, shows next steps)
+uvx code-recap init
 
-# Run directly with uvx (no install needed)
+# Or set API key manually
+export OPENAI_API_KEY='sk-...'
+
+# Generate your year-in-review
 cd ~/Documents/Repos
 uvx code-recap summarize 2025 --author "Your Name" --html --open
 # → Output: ./code-recap-2025/
@@ -106,27 +107,27 @@ uvx code-recap summarize 2025 --author "Your Name" --html --open
 
 That's it! Your reports open automatically in the browser.
 
-### Other Installation Options
+### Installation Options
 
 ```bash
-# Install globally with uv
-uv tool install code-recap
+# Run directly (no install)
+uvx code-recap summarize 2025 --author "Your Name"
 
-# Install with pip
-pip install code-recap
-
-# Install from source
-pip install -e .
+# Or install globally
+uv tool install code-recap    # then use: code-recap summarize ...
+pip install code-recap        # then use: code-recap summarize ...
 ```
 
 ### Configuration (Optional)
 
-For multi-client workflows, create a config file:
+For multi-client workflows:
 
 ```bash
-mkdir -p config && cp -r config.example/* config/
-# Edit config/config.yaml to define your clients
+code-recap init              # Creates config.yaml + API key files
+# Edit config.yaml to define your clients
 ```
+
+Or copy the [full example](config.example/config.yaml) with all options documented.
 
 ---
 
@@ -275,13 +276,15 @@ code-recap git unarchive my-project --execute
 
 Configuration is **optional**. For basic use, just run the scripts—no config needed.
 
-For customization, copy examples from `config.example/`:
+For customization, create a template config:
 
 ```bash
-cp -r config.example/* config/
+code-recap init    # Creates config.yaml with commented examples
 ```
 
-### Client Configuration (`config/config.yaml`) — Optional
+Or copy the [full example](config.example/config.yaml) with all options documented.
+
+### Client Configuration (`config.yaml`) — Optional
 
 If you're a consultant working with multiple clients, configure project-to-client mapping:
 
@@ -314,7 +317,7 @@ clients:
 - First match wins (order matters in YAML)
 - Unmatched projects go to "Other"
 
-### Exclusion Patterns (`config/excludes.yaml`)
+### Exclusion Patterns (`excludes.yaml`)
 
 Configure files/directories to exclude from line count statistics:
 
