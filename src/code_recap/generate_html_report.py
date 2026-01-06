@@ -51,6 +51,101 @@ MONTH_NAMES = [
     "December",
 ]
 
+# Short month names for compact date ranges
+MONTH_NAMES_SHORT = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+]
+
+
+def get_date_range_label(clients: list["ClientData"], year_hint: str = "") -> tuple[str, str]:
+    """Determines a human-readable date range label from available periods.
+
+    Analyzes all periods across clients to generate an appropriate label like:
+    - "2024" if all 12 months of a single year
+    - "Q4 2024" if Oct-Dec
+    - "H1 2024" if Jan-Jun
+    - "Oct-Dec 2024" if a partial range
+    - "2024-2025" if spanning multiple years
+
+    Args:
+        clients: List of client data containing periods.
+        year_hint: Year extracted from filename (fallback if no periods).
+
+    Returns:
+        Tuple of (range_label, title_suffix) where:
+        - range_label: e.g., "2024", "Q4 2024", "Oct-Dec 2024"
+        - title_suffix: e.g., "Year in Review", "Quarter in Review", "Activity Summary"
+    """
+    all_periods: list[tuple[int, int]] = []
+    for client in clients:
+        for period in client.periods:
+            all_periods.append((period.year, period.month))
+
+    if not all_periods:
+        if year_hint:
+            return year_hint, "Year in Review"
+        return "", "Activity Summary"
+
+    all_periods.sort()
+    min_year, min_month = all_periods[0]
+    max_year, max_month = all_periods[-1]
+
+    # Multi-year range
+    if min_year != max_year:
+        return f"{min_year}–{max_year}", "Activity Summary"
+
+    year = min_year
+    months = sorted({m for _, m in all_periods})
+
+    # Full year (all 12 months)
+    if len(months) == 12:
+        return str(year), "Year in Review"
+
+    # Check for standard quarters
+    q1 = {1, 2, 3}
+    q2 = {4, 5, 6}
+    q3 = {7, 8, 9}
+    q4 = {10, 11, 12}
+    h1 = {1, 2, 3, 4, 5, 6}
+    h2 = {7, 8, 9, 10, 11, 12}
+
+    months_set = set(months)
+
+    if months_set == q1:
+        return f"Q1 {year}", "Quarter in Review"
+    if months_set == q2:
+        return f"Q2 {year}", "Quarter in Review"
+    if months_set == q3:
+        return f"Q3 {year}", "Quarter in Review"
+    if months_set == q4:
+        return f"Q4 {year}", "Quarter in Review"
+    if months_set == h1:
+        return f"H1 {year}", "Half-Year Summary"
+    if months_set == h2:
+        return f"H2 {year}", "Half-Year Summary"
+
+    # Contiguous range within a year
+    if len(months) == (max_month - min_month + 1):
+        start_name = MONTH_NAMES_SHORT[min_month - 1]
+        end_name = MONTH_NAMES_SHORT[max_month - 1]
+        if min_month == max_month:
+            return f"{MONTH_NAMES[min_month - 1]} {year}", "Activity Summary"
+        return f"{start_name}–{end_name} {year}", "Activity Summary"
+
+    # Non-contiguous months - just use year
+    return str(year), "Activity Summary"
+
 
 def get_css_styles(accent_primary: str, accent_secondary: str, theme: str = "light") -> str:
     """Generates CSS styles with custom accent colors and theme toggle support.
@@ -2332,20 +2427,21 @@ def generate_index_page(
     year_label, internal_html = internal_summary
     public_year, public_html = public_summary
 
-    # Use year from either summary
-    year = year_label or public_year
+    # Determine date range from actual periods
+    year_hint = year_label or public_year
+    date_range, title_suffix = get_date_range_label(clients, year_hint)
 
     # Summary links section - show cards linking to separate pages
     summary_cards = ""
     if public_html or internal_html:
         cards = []
         if public_html:
-            cards.append("""
+            cards.append(f"""
             <a href="public.html" class="summary-card public">
                 <div class="summary-card-icon">🌐</div>
                 <div class="summary-card-content">
                     <h3>Public Report</h3>
-                    <p>Year in review suitable for blog posts, social media, and external sharing.</p>
+                    <p>{title_suffix} suitable for blog posts, social media, and external sharing.</p>
                 </div>
                 <span class="summary-card-arrow">→</span>
             </a>""")
@@ -2366,13 +2462,11 @@ def generate_index_page(
         </div>
 """
 
-    title = "Activity Reports"
-    if year:
-        title = f"{year} Year in Review"
+    title = f"{date_range} {title_suffix}" if date_range else "Activity Reports"
 
     content = f"""
         <div class="hero">
-            <h1>{year + " " if year else ""}Activity <span class="gradient">Reports</span></h1>
+            <h1>{date_range + " " if date_range else ""}Activity <span class="gradient">Reports</span></h1>
             <p class="hero-subtitle">
                 Comprehensive summaries of development work, key achievements,
                 and technical progress across all projects.
@@ -2409,9 +2503,12 @@ def generate_public_summary_page(
     Returns:
         Complete HTML page string.
     """
-    year, html_content = public_summary
+    year_hint, html_content = public_summary
     if not html_content:
         return ""
+
+    # Determine date range from actual periods
+    date_range, title_suffix = get_date_range_label(clients, year_hint)
 
     # Sort clients with "Other" always at the end
     sorted_clients = sorted(clients, key=lambda c: (c.slug.lower() == "other", c.name.lower()))
@@ -2423,7 +2520,7 @@ def generate_public_summary_page(
     content = f"""
         <div class="summary-page-header">
             <span class="badge public">Public Report</span>
-            <h1>{year} Year in Review</h1>
+            <h1>{date_range} {title_suffix}</h1>
             <p style="color: var(--text-secondary); margin-top: 0.5rem;">
                 Suitable for blog posts, social media, and external sharing
             </p>
@@ -2439,7 +2536,7 @@ def generate_public_summary_page(
 """
 
     return generate_html_page(
-        title=f"Public Report - {year}",
+        title=f"Public Report - {date_range}",
         content=content,
         nav_items=nav_items,
         config=config,
@@ -2462,9 +2559,12 @@ def generate_internal_summary_page(
     Returns:
         Complete HTML page string.
     """
-    year, html_content = internal_summary
+    year_hint, html_content = internal_summary
     if not html_content:
         return ""
+
+    # Determine date range from actual periods
+    date_range, title_suffix = get_date_range_label(clients, year_hint)
 
     # Sort clients with "Other" always at the end
     sorted_clients = sorted(clients, key=lambda c: (c.slug.lower() == "other", c.name.lower()))
@@ -2476,7 +2576,7 @@ def generate_internal_summary_page(
     content = f"""
         <div class="summary-page-header">
             <span class="badge internal">Internal Report</span>
-            <h1>{year} Company Overview</h1>
+            <h1>{date_range} Company Overview</h1>
             <p style="color: var(--text-secondary); margin-top: 0.5rem;">
                 Detailed breakdown with client metrics (not for external sharing)
             </p>
@@ -2492,7 +2592,7 @@ def generate_internal_summary_page(
 """
 
     return generate_html_page(
-        title=f"Internal Report - {year}",
+        title=f"Internal Report - {date_range}",
         content=content,
         nav_items=nav_items,
         config=config,

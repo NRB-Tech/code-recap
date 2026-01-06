@@ -256,4 +256,5 @@ config/
 
 # Output directory
 output*/
-!output.example/
+!output.example.clients/
+!output.example.solo/

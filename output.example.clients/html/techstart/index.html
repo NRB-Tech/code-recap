@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>December 2024 - Acme Widgets</title>
+    <title>TechStart - 2024 Year in Review</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
@@ -35,16 +35,16 @@
     --nav-bg: rgba(248, 250, 252, 0.9);
     --bg-pattern-1: 5%;
     --bg-pattern-2: 4%;
-    --accent-primary: #2FF6FB;
-    --accent-secondary: #047CC3;
-    --accent-gradient: linear-gradient(135deg, #2FF6FB 0%, #047CC3 100%);
+    --accent-primary: #2196F3;
+    --accent-secondary: #1976D2;
+    --accent-gradient: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
     --success: #10b981;
     --warning: #f59e0b;
     --danger: #ef4444;
     --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
-    --shadow-glow: 0 0 20px color-mix(in srgb, #2FF6FB 20%, transparent);
+    --shadow-glow: 0 0 20px color-mix(in srgb, #2196F3 20%, transparent);
     --radius-sm: 6px;
     --radius-md: 10px;
     --radius-lg: 16px;
@@ -436,6 +436,24 @@ a:hover {
 }
 
 /* Internal summary section */
+/* Public summary section (for blog posts, external sharing) */
+.public-summary {
+    max-width: 900px;
+    margin: 0 auto 3rem;
+}
+
+.public-summary .content {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+}
+
+.public-summary h2:first-child {
+    margin-top: 0;
+}
+
+/* Internal summary section */
 .internal-summary {
     max-width: 900px;
     margin: 0 auto 3rem;
@@ -446,6 +464,117 @@ a:hover {
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 2rem;
+}
+
+/* Summary page cards on overview */
+.summary-cards {
+    display: flex;
+    gap: 1.5rem;
+    max-width: 900px;
+    margin: 0 auto 3rem;
+    flex-wrap: wrap;
+}
+
+.summary-card {
+    flex: 1;
+    min-width: 280px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-color: var(--accent-primary);
+}
+
+.summary-card-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.summary-card-content {
+    flex: 1;
+}
+
+.summary-card-content h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+    color: var(--text-primary);
+}
+
+.summary-card-content p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.summary-card-arrow {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    transition: transform 0.2s ease;
+}
+
+.summary-card:hover .summary-card-arrow {
+    transform: translateX(4px);
+    color: var(--accent-primary);
+}
+
+/* Page header for summary pages */
+.summary-page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.summary-page-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+}
+
+.summary-page-header .badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.summary-page-header .badge.public {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.summary-page-header .badge.internal {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: white;
+}
+
+.summary-back-link {
+    display: inline-block;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.summary-back-link:hover {
+    color: var(--accent-primary);
+    background: var(--surface);
 }
 
 .clients-heading {
@@ -989,62 +1118,12 @@ a:hover {
 <body>
     
     <div class="standalone-header-wrapper">
-        <a href="https://www.nrbtech.io/" class="collab-header" target="_blank" rel="noopener">
+        <a href="https://www.acme-consulting.example/" class="collab-header" target="_blank" rel="noopener">
             <span class="collab-header-company">
-                <?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 23.0.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<svg version="1.1" id="svg1_Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 500 120" style="enable-background:new 0 0 500 120;" xml:space="preserve">
-<style type="text/css">
-	.svg1_st0{fill-rule:evenodd;clip-rule:evenodd;fill:url(#svg1_SVGID_1_);}
-	.svg1_st1{fill:#0D3B66;}
-</style>
-<g>
-	<linearGradient id="svg1_SVGID_1_" gradientUnits="userSpaceOnUse" x1="75.1338" y1="10.4044" x2="75.1338" y2="103.9118">
-		<stop  offset="0" style="stop-color:#2FF6FB"/>
-		<stop  offset="1" style="stop-color:#047CC3"/>
-	</linearGradient>
-	<path class="svg1_st0" d="M54.5,26.38c2.9-2.9,2.91-7.61,0-10.52c-2.91-2.91-7.61-2.91-10.52,0c-2.9,2.9-2.9,7.61,0,10.52
-		C46.9,29.28,51.6,29.28,54.5,26.38L54.5,26.38z M95.77,67.82c-2.9,2.9-2.91,7.61,0,10.52c2.91,2.91,7.61,2.91,10.52,0
-		c2.9-2.9,2.9-7.61,0-10.52C103.37,64.92,98.67,64.92,95.77,67.82L95.77,67.82z M95.77,26.38c-2.91-2.9-2.91-7.61-0.01-10.52
-		c2.91-2.91,7.61-2.91,10.52,0c2.91,2.91,2.9,7.61,0,10.52C103.37,29.28,98.67,29.28,95.77,26.38L95.77,26.38z M54.5,67.82
-		c2.9,2.9,2.91,7.61,0,10.52c-2.91,2.91-7.61,2.91-10.52,0c-2.9-2.9-2.9-7.61,0-10.52C46.89,64.92,51.6,64.92,54.5,67.82L54.5,67.82
-		z M119.02,47.1c0-4.11,3.32-7.44,7.43-7.44c4.11,0,7.44,3.33,7.44,7.44c0,4.11-3.33,7.43-7.44,7.43
-		C122.35,54.54,119.02,51.21,119.02,47.1L119.02,47.1z M31.25,47.11c0-4.11-3.33-7.44-7.43-7.44c-4.11,0-7.44,3.33-7.44,7.44
-		c0,4.11,3.33,7.43,7.44,7.43C27.92,54.54,31.24,51.21,31.25,47.11L31.25,47.11z M82.57,47.11c0-4.11-3.33-7.44-7.43-7.44
-		c-4.11,0-7.44,3.33-7.44,7.44c0,4.11,3.33,7.43,7.44,7.43C79.24,54.54,82.57,51.21,82.57,47.11L82.57,47.11z M75.14,91.44
-		c-4.11,0-7.44,3.32-7.44,7.43c0,4.11,3.33,7.44,7.44,7.44c4.11,0,7.43-3.33,7.43-7.44C82.57,94.77,79.24,91.44,75.14,91.44
-		L75.14,91.44z M77.78,59.65v9.16c0,6.67,2.35,15,6.42,20.35c2.27,2.98,4.23,5.81,4.23,9.71c0,7.34-5.95,13.3-13.3,13.3
-		c-7.35,0-13.3-5.95-13.3-13.3c0-3.87,1.97-6.75,4.23-9.71c4.07-5.35,6.42-13.68,6.42-20.35v-9.16c-1.37-0.29-2.67-0.8-3.84-1.48
-		c-3.07,4.34-5.46,9.64-6.12,14.46c-0.5,3.69-1.14,7.12-3.88,9.86c-5.2,5.2-13.62,5.2-18.81,0c-5.2-5.19-5.19-13.61,0-18.81
-		c2.76-2.76,6.15-3.38,9.86-3.88c4.82-0.65,10.1-3.04,14.43-6.1c-0.72-1.2-1.26-2.53-1.55-3.95l-8.71,0c-6.67,0-15,2.35-20.35,6.42
-		c-2.98,2.27-5.81,4.23-9.71,4.23c-7.34,0-13.3-5.95-13.3-13.3c0-7.35,5.95-13.3,13.3-13.3c3.87,0,6.75,1.97,9.71,4.23
-		c5.35,4.08,13.68,6.42,20.35,6.42h8.71c0.3-1.42,0.83-2.75,1.55-3.95c-4.34-3.05-9.62-5.44-14.43-6.1c-3.71-0.5-7.1-1.12-9.86-3.88
-		c-5.19-5.19-5.2-13.61,0-18.81c5.2-5.2,13.62-5.2,18.81,0c2.74,2.74,3.38,6.17,3.88,9.86c0.65,4.83,3.05,10.12,6.12,14.46
-		c1.9-1.12,4.12-1.76,6.49-1.76c2.36,0,4.58,0.64,6.48,1.76c3.07-4.34,5.46-9.64,6.12-14.46c0.5-3.69,1.14-7.12,3.88-9.86
-		c5.2-5.19,13.62-5.19,18.81,0c5.19,5.19,5.19,13.61,0,18.81c-2.76,2.76-6.15,3.37-9.86,3.88c-4.81,0.65-10.09,3.04-14.43,6.1
-		c0.72,1.2,1.25,2.53,1.55,3.95h8.71c6.67,0,15-2.35,20.35-6.42c2.96-2.25,5.84-4.23,9.71-4.23c7.35,0,13.3,5.95,13.3,13.3
-		c0,7.35-5.96,13.3-13.3,13.3c-3.91,0-6.74-1.96-9.71-4.23c-5.35-4.07-13.68-6.42-20.35-6.42h-8.71c-0.3,1.42-0.83,2.75-1.55,3.95
-		c4.34,3.05,9.62,5.44,14.43,6.1c3.71,0.5,7.1,1.12,9.86,3.88c5.19,5.19,5.2,13.61,0,18.81c-5.2,5.2-13.62,5.2-18.81,0
-		c-2.74-2.74-3.38-6.17-3.88-9.86c-0.65-4.83-3.05-10.12-6.12-14.46C80.45,58.85,79.15,59.36,77.78,59.65L77.78,59.65z"/>
-	<path class="svg1_st1" d="M203.47,81.59V38.41h-8v31.43l-17.88-31.43h-9.11v43.17h8.01V50.21l18.05,31.37H203.47L203.47,81.59z
-		 M253.46,81.59l-11.69-15.95c7.77-1.93,11.28-6.66,11.28-13.38c0-4.38-1.58-8.12-4.56-10.63c-2.81-2.4-5.9-3.21-11.8-3.21h-12.44
-		v43.17h8.01V65.05l11.33,16.53H253.46L253.46,81.59z M244.99,52.49c0,4.56-2.63,6.54-8.82,6.54h-3.91V46.07h3.56
-		C243.41,46.07,244.99,48.64,244.99,52.49L244.99,52.49z M298.71,68.73c0-5.14-1.87-8.41-7.36-10.69c3.45-1.81,4.79-4.09,4.79-8.12
-		s-1.81-7.42-4.91-9.41c-2.57-1.64-5.26-2.1-11.68-2.1h-8.88v43.17h11.51C293.27,81.59,298.71,76.62,298.71,68.73L298.71,68.73
-		L298.71,68.73z M290.64,68.56c0,3.74-2.39,5.38-8,5.38h-3.97V62.89h3.8C288.01,62.89,290.64,64.7,290.64,68.56L290.64,68.56z
-		 M288.13,50.62c0,3.1-2.05,4.44-6.89,4.44h-2.57v-8.82h3.27C286.09,46.24,288.13,47.64,288.13,50.62L288.13,50.62L288.13,50.62z
-		 M337.59,42.33v-3.91h-24.07v3.91h9.87v39.26h4.32V42.33H337.59L337.59,42.33z M378.45,81.59v-3.91h-19.28V61.72h18.64v-3.91
-		h-18.64V42.33h19.28v-3.91h-23.6v43.17H378.45L378.45,81.59z M439.11,70.25h-4.79c-4.56,5.73-8.71,8.12-15.02,8.12
-		c-9.99,0-18.23-8.3-18.23-18.4c0-10.4,7.89-18.35,18.17-18.35c6.08,0,11.16,2.22,14.84,8h4.85c-3.33-7.42-10.92-11.98-19.86-11.98
-		c-12.85,0-22.38,9.58-22.38,22.49c0,12.62,9.76,22.2,22.67,22.2C428.13,82.35,434.79,78.26,439.11,70.25L439.11,70.25z
-		 M489.49,81.59V38.41h-4.32V57.4h-22.38V38.41h-4.32v43.17h4.32V61.32h22.38v20.27H489.49L489.49,81.59z"/>
-</g>
-</svg>
-
+                
             </span>
             <span class="collab-header-separator">×</span>
-            <span class="collab-header-client">Acme Widgets</span>
+            <span class="collab-header-client">TechStart</span>
         </a>
         <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
             <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1061,74 +1140,229 @@ a:hover {
     <main class="main">
         
         
-        <div class="period-nav">
-            <a href="index.html" class="back-link">← Summary</a>
+        <div class="year-subtitle">2024 Year in Review</div>
+
+        
+        <div class="charts-section">
+            <h2>Activity Overview</h2>
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Commits per Month</h3>
+                    <canvas id="commitsChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Lines Changed per Month</h3>
+                    <canvas id="linesChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Languages</h3>
+                    <canvas id="languagesChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Projects</h3>
+                    <canvas id="projectsChart"></canvas>
+                </div>
+            </div>
         </div>
 
-        <div class="page-header">
-            <h1>December 2024</h1>
-        </div>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+        <script>
+        (function() {
+            const monthsData = [{"label": "Oct 2024", "commits": 134, "added": 8923, "removed": 3456}, {"label": "Nov 2024", "commits": 156, "added": 10234, "removed": 4123}, {"label": "Dec 2024", "commits": 112, "added": 6789, "removed": 2345}];
+            const langLabels = ["Swift", "TypeScript", "Config", "JSON", "Other"];
+            const langValues = [13257, 7344, 2557, 1644, 1044];
+            const projLabels = ["techstart-ios", "techstart-api", "techstart-web"];
+            const projValues = [269, 94, 39];
+            const chartColors = ["#2196F3", "#1976D2", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4", "#f97316"];
+
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+
+            Chart.defaults.color = textColor;
+            Chart.defaults.borderColor = gridColor;
+
+            // Commits line chart
+            if (monthsData.some(m => m.commits > 0)) {
+                new Chart(document.getElementById('commitsChart'), {
+                    type: 'line',
+                    data: {
+                        labels: monthsData.map(m => m.label),
+                        datasets: [{
+                            label: 'Commits',
+                            data: monthsData.map(m => m.commits),
+                            borderColor: chartColors[0],
+                            backgroundColor: chartColors[0] + '20',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        aspectRatio: 1.8,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: gridColor } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            // Lines changed bar chart
+            if (monthsData.some(m => m.added > 0 || m.removed > 0)) {
+                new Chart(document.getElementById('linesChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: monthsData.map(m => m.label),
+                        datasets: [
+                            {
+                                label: 'Added',
+                                data: monthsData.map(m => m.added),
+                                backgroundColor: '#10b981',
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Removed',
+                                data: monthsData.map(m => -m.removed),
+                                backgroundColor: '#ef4444',
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        aspectRatio: 1.8,
+                        plugins: { legend: { position: 'bottom' } },
+                        scales: {
+                            y: { grid: { color: gridColor } },
+                            x: { stacked: true, grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            // Languages doughnut chart
+            if (langLabels.length > 0) {
+                new Chart(document.getElementById('languagesChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: langLabels,
+                        datasets: [{
+                            data: langValues,
+                            backgroundColor: chartColors,
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        aspectRatio: 1.8,
+                        plugins: {
+                            legend: { position: 'right', labels: { boxWidth: 12, padding: 10 } }
+                        }
+                    }
+                });
+            }
+
+            // Projects horizontal bar chart
+            if (projLabels.length > 0) {
+                new Chart(document.getElementById('projectsChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: projLabels,
+                        datasets: [{
+                            label: 'Commits',
+                            data: projValues,
+                            backgroundColor: chartColors[1],
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        aspectRatio: 1.8,
+                        indexAxis: 'y',
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                grid: { color: gridColor },
+                                title: { display: true, text: 'Commits', color: textColor }
+                            },
+                            y: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+        })();
+        </script>
+
 
         <div class="content">
-            <h2>Overview</h2>
-<div class="stats-grid"><div class="stats-item">
-                <div class="stats-label"><span class="stats-icon">📊</span>Stats</div>
-                <div class="stats-value">76 commits, +3,456/-1,234 lines, 87 files, 12 active days</div>
-            </div><div class="stats-item">
-                <div class="stats-label"><span class="stats-icon">💻</span>Languages</div>
-                <div class="stats-value">C (+1,987), Python (+678), Config (+345), Markdown (+234), Other (+112)</div>
-            </div><div class="stats-item">
-                <div class="stats-label"><span class="stats-icon">📁</span>Projects</div>
-                <div class="stats-value">widget-firmware (62), widget-cli (8), widget-docs (6)</div>
-            </div></div>
-<p>December concluded the quarter with a focus on production readiness, including OTA update support, manufacturing test modes, and comprehensive documentation. The firmware is now ready for initial production runs.</p>
-<h3>Key Changes &amp; Features</h3>
-<ul>
-<li><strong>Over-the-Air Updates</strong>
-<ul>
-<li>Implemented a dual-bank firmware architecture enabling safe OTA updates with automatic rollback on failure.
+            <h2>Executive Summary</h2>
+<p>The fourth quarter of 2024 saw the TechStart mobile application evolve from concept to a feature-complete product ready for App Store launch. We built a robust foundation using modern Swift and SwiftUI, implemented sophisticated real-time collaboration features, and achieved a successful TestFlight beta release. The offline-first architecture ensures a reliable user experience regardless of network conditions, while the analytics integration provides valuable insights for future product decisions.</p>
+<h2>Key Achievements &amp; Features</h2>
+<ol>
+<li><strong>iOS App Launch:</strong> Delivered a production-ready iOS application with complete authentication, including Sign in with Apple and Google OAuth integration.
 </li>
-<li>Added firmware signature verification using Ed25519 for secure update authentication.
+<li><strong>Real-Time Collaboration:</strong> Implemented WebSocket-based live updates with operational transformation for conflict-free concurrent editing.
 </li>
-<li>Created a staged update process: download, verify, apply, and confirm.
+<li><strong>Offline-First Design:</strong> Built a comprehensive sync engine with local SQLite storage, enabling full functionality without network connectivity.
+</li>
+<li><strong>Push Notifications:</strong> Integrated APNs with actionable notification categories and user-configurable preferences.
+</li>
+<li><strong>App Store Compliance:</strong> Completed all App Store requirements including privacy labels, account deletion, and accessibility features.
+</li></ol>
+<h2>Technology &amp; Language Trends</h2>
+<p>The project showcases modern mobile and backend development:</p>
+<ul>
+<li><strong>iOS:</strong> Swift with SwiftUI for declarative UI, Combine for reactive programming, and Core Data for persistence.
+</li>
+<li><strong>Backend:</strong> TypeScript with Node.js and Express, using PostgreSQL for data storage and Redis for real-time pub/sub.
+</li>
+<li><strong>Infrastructure:</strong> Firebase for analytics, crash reporting, and performance monitoring.
+</li></ul>
+<h2>Project Focus Areas</h2>
+<ul>
+<li><strong>Foundation (October):</strong> Established architecture, design system, and authentication flow.
+</li>
+<li><strong>Core Features (November):</strong> Real-time collaboration, offline sync, and push notifications.
+</li>
+<li><strong>Polish &amp; Launch (December):</strong> Performance optimization, App Store preparation, and analytics.
+</li></ul>
+<h2>Development Highlights</h2>
+<ul>
+<li><strong>40% Launch Time Reduction:</strong> Lazy initialization and dependency injection optimization significantly improved cold start performance.
+</li>
+<li><strong>Event Sourcing:</strong> Immutable event log enables complete audit trail and easy debugging of sync issues.
+</li>
+<li><strong>Privacy-First Analytics:</strong> Client-side anonymization ensures user privacy while maintaining actionable insights.
+</li></ul>
+<h2>Suggested Blog Posts</h2>
+<ol>
+<li><strong>Building an Offline-First iOS App with SwiftUI</strong>
+<ul>
+<li>Architecture patterns for maintaining full functionality without network connectivity.
 </li></ul>
 </li>
-<li><strong>Manufacturing Support</strong>
+<li><strong>Operational Transformation for Real-Time Collaboration</strong>
 <ul>
-<li>Developed a dedicated manufacturing test mode with automated hardware verification sequences.
-</li>
-<li>Implemented unique device ID programming and certificate provisioning workflows.
-</li>
-<li>Added QR code generation for device labeling with serial numbers and calibration data.
+<li>How to implement conflict-free concurrent editing in a mobile application.
 </li></ul>
 </li>
-<li><strong>Documentation &amp; Release Prep</strong>
+<li><strong>From Zero to App Store: A Startup's Journey</strong>
 <ul>
-<li>Created comprehensive API documentation for the serial command protocol.
-</li>
-<li>Wrote integration guides for common host platforms (Linux, Windows, macOS).
-</li>
-<li>Prepared release notes and changelog automation scripts.
+<li>Lessons learned shipping a mobile app in one quarter, from architecture to TestFlight.
 </li></ul>
-</li></ul>
-<h3>Technologies &amp; Languages</h3>
-<ul>
-<li><strong>Embedded C:</strong> Bootloader development and cryptographic verification routines.
-</li>
-<li><strong>Python:</strong> Manufacturing tools and documentation generation scripts.
-</li>
-<li><strong>Ed25519:</strong> Asymmetric cryptography for firmware authentication.
-</li></ul>
-<h3>Patterns &amp; Architecture</h3>
-<ul>
-<li><strong>A/B Partitioning:</strong> Dual firmware banks ensure a known-good image is always available for recovery.
-</li>
-<li><strong>Chain of Trust:</strong> Bootloader verifies application signature before execution, preventing unauthorized code.
-</li>
-<li><strong>Atomic Updates:</strong> Configuration changes are written to shadow storage and committed atomically.
-</li></ul>
+</li></ol>
         </div>
 
+        
         <div class="periods-section">
             <h2>Monthly Reports</h2>
             <div class="periods-grid">
@@ -1143,18 +1377,19 @@ a:hover {
                 <span class="year">2024</span>
             </a>
 
-            <span class="period-link current">
+            <a href="2024-12.html" class="period-link">
                 <span class="month">December</span>
                 <span class="year">2024</span>
-            </span>
+            </a>
 
             </div>
         </div>
 
+
     </main>
 
     <footer class="footer">
-        Generated on January 06, 2026 by <a href="https://www.nrbtech.io/" target="_blank" rel="noopener">NRB Tech Ltd</a>
+        Generated on January 06, 2026 by <a href="https://www.acme-consulting.example/" target="_blank" rel="noopener">Acme Consulting</a>
     </footer>
 
     <script>

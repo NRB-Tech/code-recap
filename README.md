@@ -20,9 +20,15 @@ Generate beautiful activity reports, client summaries, and blog posts from your 
 
 See what generated reports look like:
 
-- [**Example HTML Report**](https://nrb-tech.github.io/code-recap/output.example/html/) — Browse the styled HTML version
-- [Monthly summary (markdown)](https://github.com/nrb-tech/code-recap/blob/main/output.example/acme_widgets/periods/2024-10.md)
-- [Annual client summary (markdown)](https://github.com/nrb-tech/code-recap/blob/main/output.example/acme_widgets/summary-2024.md)
+**For consultants with multiple clients:**
+- [**Client Reports (HTML)**](https://nrb-tech.github.io/code-recap/output.example.clients/html/) — Browse the styled HTML version
+- [Monthly summary (markdown)](https://github.com/nrb-tech/code-recap/blob/main/output.example.clients/acme_widgets/periods/2024-10.md)
+- [Annual client summary (markdown)](https://github.com/nrb-tech/code-recap/blob/main/output.example.clients/acme_widgets/summary-2024.md)
+
+**For solo developers or internal work:**
+- [**Solo Reports (HTML)**](https://nrb-tech.github.io/code-recap/output.example.solo/html/) — Without client organization
+- [Monthly summary (markdown)](https://github.com/nrb-tech/code-recap/blob/main/output.example.solo/projects/periods/2024-10.md)
+- [Annual summary (markdown)](https://github.com/nrb-tech/code-recap/blob/main/output.example.solo/projects/summary-2024.md)
 
 ---
 
@@ -88,6 +94,8 @@ clients:
 **API Keys** — Store LLM API keys in config.yaml (or use environment variables).
 
 **HTML Styling** — Customize report branding, colors, and company logo.
+
+**Public Summary Privacy** — Control which clients appear in public summaries (anonymize, suppress, or show full names).
 
 See [Configuration](#configuration) for full details.
 
@@ -191,6 +199,7 @@ code-recap summarize 2025 --dry-run                     # Preview (no API cost)
 | `--model` | LLM model (see Recommended Models above) | `gpt-4o-mini` |
 | `--client` | Filter to specific client | All clients |
 | `--max-cost` | Budget limit in USD | `1.00` |
+| `--summaries-only` | Regenerate internal/public summaries from existing markdown | `false` |
 | `--no-html` | Skip HTML report generation | `false` |
 | `--open` | Open HTML in browser | `false` |
 | `--dry-run` | Preview without API calls | `false` |
@@ -368,6 +377,37 @@ Get keys from:
 - [OpenAI](https://platform.openai.com/api-keys)
 - [Google Gemini](https://aistudio.google.com/apikey)
 - [Anthropic](https://console.anthropic.com/settings/keys)
+
+### Public Summary Privacy
+
+Control how client information appears in public-facing summaries (blog posts, annual reports):
+
+```yaml
+public_summary:
+  # Default: "anonymize" | "full" | "suppress"
+  default_disclosure: "anonymize"
+
+  # Per-client overrides
+  clients:
+    "Open Source Project":
+      disclosure: "full"           # Show actual name
+    "Acme Corp":
+      disclosure: "anonymize"
+      description: "a consumer electronics company"
+    "Secret Client":
+      disclosure: "suppress"       # Exclude entirely
+```
+
+**Disclosure levels:**
+- `full` — Use actual client name in public content
+- `anonymize` — Replace with description (default)
+- `suppress` — Exclude from public summary entirely
+
+To regenerate public summaries after changing disclosure settings without reprocessing all clients:
+
+```bash
+code-recap summarize 2025 --summaries-only
+```
 
 ---
 
