@@ -358,9 +358,7 @@ def format_output_with_llm(
         )
 
         prompt = format_project_prompt(activity, include_diffs)
-        summary = call_llm(
-            model, DAILY_SUMMARY_SYSTEM_PROMPT, prompt, cost_tracker, temperature
-        )
+        summary = call_llm(model, DAILY_SUMMARY_SYSTEM_PROMPT, prompt, cost_tracker, temperature)
 
         lines.append(f"## {activity.project_name}")
         lines.append("")

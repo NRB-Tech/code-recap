@@ -1630,7 +1630,9 @@ Environment variables for API keys:
                 import re as re_module
 
                 client_slug = re_module.sub(r"[^\w\-]", "_", client_name.lower())
-                summary_path = base_output_dir / client_slug / f"summary-{args.period.replace(':', '-to-')}.md"
+                summary_path = (
+                    base_output_dir / client_slug / f"summary-{args.period.replace(':', '-to-')}.md"
+                )
 
             if summary_path.exists():
                 content = summary_path.read_text()
@@ -1663,7 +1665,10 @@ Environment variables for API keys:
                 print(f"  Warning: Not found: {summary_path}", file=sys.stderr)
 
         if not all_client_results:
-            print("Error: No existing summaries found. Run without --summaries-only first.", file=sys.stderr)
+            print(
+                "Error: No existing summaries found. Run without --summaries-only first.",
+                file=sys.stderr,
+            )
             return 1
 
         # Skip to internal/public summary generation (handled below)

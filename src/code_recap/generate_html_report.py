@@ -2458,7 +2458,7 @@ def generate_index_page(
 
         summary_cards = f"""
         <div class="summary-cards">
-            {''.join(cards)}
+            {"".join(cards)}
         </div>
 """
 
