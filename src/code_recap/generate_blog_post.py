@@ -20,13 +20,6 @@ import sys
 from dataclasses import dataclass
 from typing import Optional
 
-from summarize_activity import (
-    RECOMMENDED_MODELS,
-    CostTracker,
-    call_llm,
-    load_config,
-)
-
 from code_recap.git_activity_review import (
     date_range_to_git_args,
     parse_period,
@@ -42,6 +35,12 @@ from code_recap.git_utils import (
 
 # Default model
 from code_recap.paths import get_config_path
+from code_recap.summarize_activity import (
+    RECOMMENDED_MODELS,
+    CostTracker,
+    call_llm,
+    load_config,
+)
 
 DEFAULT_MODEL = "gpt-4o-mini"
 
@@ -1141,8 +1140,11 @@ def cmd_list_models(args: argparse.Namespace) -> int:
     return 0
 
 
-def main() -> int:
+def main(argv: Optional[list[str]] = None) -> int:
     """Entry point for the CLI tool.
+
+    Args:
+        argv: Command-line arguments (defaults to sys.argv[1:]).
 
     Returns:
         Process exit code.
@@ -1214,7 +1216,7 @@ Examples:
         help="Filter by provider (openai, anthropic, gemini).",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.command is None:
         parser.print_help()

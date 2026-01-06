@@ -93,27 +93,40 @@ This creates separate reports per client in `code-recap-2025/acme_corp/`, etc.
 ## Quick Start
 
 ```bash
-# Install from PyPI
-pip install code-recap
-
-# Or install from source
-pip install -e .
-
-# (Optional) Configure for multi-client use
-mkdir -p config && cp -r config.example/* config/
-
 # Set API key (choose one)
 export OPENAI_API_KEY='sk-...'      # For GPT-4o-mini
 export GEMINI_API_KEY='...'         # For Gemini Flash
 export ANTHROPIC_API_KEY='sk-...'   # For Claude Haiku
 
-# Generate 2025 year-in-review with HTML
+# Run directly with uvx (no install needed)
 cd ~/Documents/Repos
-code-recap summarize 2025 --author "Your Name" --html --open
+uvx code-recap summarize 2025 --author "Your Name" --html --open
 # → Output: ./code-recap-2025/
 ```
 
 That's it! Your reports open automatically in the browser.
+
+### Other Installation Options
+
+```bash
+# Install globally with uv
+uv tool install code-recap
+
+# Install with pip
+pip install code-recap
+
+# Install from source
+pip install -e .
+```
+
+### Configuration (Optional)
+
+For multi-client workflows, create a config file:
+
+```bash
+mkdir -p config && cp -r config.example/* config/
+# Edit config/config.yaml to define your clients
+```
 
 ---
 
