@@ -703,6 +703,48 @@ Organize the suggestions into categories:
 
 Focus on posts that demonstrate expertise without revealing confidential client details."""
 
+# Public-facing summary (for blog posts, annual reports, social media)
+PUBLIC_SUMMARY_SYSTEM_PROMPT = """You are an expert at writing engaging public announcements about software development.
+Create a polished, public-facing summary of the year's work suitable for a blog post or annual report.
+
+IMPORTANT: This is PUBLIC content. Do NOT mention specific client names or confidential details.
+Anonymize client references (e.g., "a music technology company", "an IoT startup", "a healthcare client").
+
+Write in an engaging, professional tone that showcases capabilities and achievements.
+
+Structure your response as follows:
+
+## Year in Review: {year}
+
+An engaging 2-3 paragraph introduction summarizing the year's themes and scale of work.
+Mention the breadth of projects, technologies, and industries served.
+
+## Key Achievements
+
+5-7 bullet points highlighting the most impressive accomplishments. Be specific about
+technical achievements but anonymize client details. Focus on outcomes and impact.
+
+## Technologies & Expertise
+
+A summary of the key technologies, frameworks, and domains worked with.
+Organize by category (e.g., Mobile, Embedded, Backend, etc.).
+
+## By the Numbers
+
+Key statistics that showcase productivity:
+- Projects delivered
+- Lines of code
+- Technologies used
+- Any other impressive metrics
+
+## Looking Ahead
+
+1-2 paragraphs about capabilities demonstrated and areas of expertise.
+End on a forward-looking note.
+
+Keep the tone professional but approachable. This should be suitable for LinkedIn, a company blog,
+or an annual report. Avoid technical jargon that wouldn't resonate with a general audience."""
+
 
 @dataclass
 class CostTracker:
@@ -1771,6 +1813,88 @@ Environment variables for API keys:
 
         print(f"Internal summary written to: {internal_path}", file=sys.stderr)
         print(f"Final cost: {total_cost_tracker.summary()}", file=sys.stderr)
+
+    # Generate public-facing summary (for blog posts, annual reports)
+    if all_client_results and not args.stdout:
+        print("", file=sys.stderr)
+        print(f"{'=' * 60}", file=sys.stderr)
+        print("Generating public-facing summary...", file=sys.stderr)
+        print(f"{'=' * 60}", file=sys.stderr)
+
+        # Format public summary prompt (anonymize clients)
+        public_lines = [
+            f"# Activity Summary: {args.period}",
+            "",
+            f"Summarizing work across {len(all_client_results)} projects/clients.",
+            "",
+        ]
+
+        # Calculate combined stats
+        if not all_client_results:
+            pass
+        elif len(all_client_results) == 1:
+            _, combined_stats, _ = all_client_results[0]
+        else:
+            combined_stats = aggregate_all_period_stats(
+                [(c, s, o) for c, s, o in all_client_results],
+                args.period,
+            )
+
+        public_lines.append(f"**Total Stats:** {combined_stats.commits} commits, ")
+        public_lines.append(
+            f"+{format_number(combined_stats.lines_added)}/-{format_number(combined_stats.lines_removed)} lines"
+        )
+        public_lines.append("")
+
+        # Add anonymized client summaries
+        for i, (_client_name, client_stats, client_summary) in enumerate(all_client_results, 1):
+            public_lines.append(f"## Project {i}")
+            public_lines.append(f"({client_stats.commits} commits)")
+            public_lines.append("")
+            public_lines.append(client_summary)
+            public_lines.append("")
+
+        public_prompt = "\n".join(public_lines)
+
+        # Extract year from period for the prompt
+        year = args.period.split("-")[0] if "-" in args.period else args.period
+        public_system_prompt = PUBLIC_SUMMARY_SYSTEM_PROMPT.replace("{year}", year)
+
+        if args.dry_run:
+            print(
+                f"[DRY RUN] Would send {len(public_prompt)} chars for public summary",
+                file=sys.stderr,
+            )
+            public_output = "*(Dry run - public summary would appear here)*"
+        else:
+            try:
+                public_output = call_llm(
+                    args.model,
+                    public_system_prompt,
+                    public_prompt,
+                    args.temperature,
+                    total_cost_tracker,
+                    args.max_cost,
+                )
+            except SystemExit as e:
+                print(f"Error generating public summary: {e}", file=sys.stderr)
+                public_output = "*(Summary generation failed)*"
+
+        # Save public summary
+        public_dir_path = get_output_dir(
+            output_dir=args.output_dir,
+            period=args.period.split(":")[0] if ":" in args.period else args.period,
+        )
+        public_dir = str(public_dir_path)
+        os.makedirs(public_dir, exist_ok=True)
+        public_path = os.path.join(
+            public_dir, f"public-summary-{args.period.replace(':', '-to-')}.md"
+        )
+
+        with open(public_path, "w") as f:
+            f.write(public_output)
+
+        print(f"Public summary written to: {public_path}", file=sys.stderr)
 
     # Generate HTML reports if requested
     if args.html and not args.stdout and not args.dry_run:

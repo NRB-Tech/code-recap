@@ -483,6 +483,24 @@ a:hover {{
 }}
 
 /* Internal summary section */
+/* Public summary section (for blog posts, external sharing) */
+.public-summary {{
+    max-width: 900px;
+    margin: 0 auto 3rem;
+}}
+
+.public-summary .content {{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+}}
+
+.public-summary h2:first-child {{
+    margin-top: 0;
+}}
+
+/* Internal summary section */
 .internal-summary {{
     max-width: 900px;
     margin: 0 auto 3rem;
@@ -2123,10 +2141,41 @@ def load_internal_summary(input_dir: Path) -> tuple[str, str]:
     return year_label, html_content
 
 
+def load_public_summary(input_dir: Path) -> tuple[str, str]:
+    """Loads the public-facing summary if it exists.
+
+    Args:
+        input_dir: Directory containing the markdown files.
+
+    Returns:
+        Tuple of (year_label, html_content) or ("", "") if not found.
+    """
+    summary_files = sorted(input_dir.glob("public-summary-*.md"), reverse=True)
+    if not summary_files:
+        return "", ""
+
+    summary_file = summary_files[0]
+    content = summary_file.read_text(encoding="utf-8")
+
+    # Extract year from filename (public-summary-2025.md -> 2025)
+    year_match = re.search(r"public-summary-(\d{4})\.md", summary_file.name)
+    year_label = year_match.group(1) if year_match else ""
+
+    # Skip dry run placeholder
+    if content.strip().startswith("*(Dry run"):
+        return "", ""
+
+    # Convert to HTML
+    html_content = markdown_to_html(content)
+
+    return year_label, html_content
+
+
 def generate_index_page(
     clients: list[ClientData],
     config: ReportConfig,
     internal_summary: tuple[str, str] = ("", ""),
+    public_summary: tuple[str, str] = ("", ""),
 ) -> str:
     """Generates the main index page with client cards.
 
@@ -2134,6 +2183,7 @@ def generate_index_page(
         clients: List of client data to display.
         config: Report configuration.
         internal_summary: Tuple of (year_label, html_content) for internal summary.
+        public_summary: Tuple of (year_label, html_content) for public-facing summary.
     """
     # Sort clients with "Other" always at the end
     sorted_clients = sorted(clients, key=lambda c: (c.slug.lower() == "other", c.name.lower()))
@@ -2168,30 +2218,48 @@ def generate_index_page(
         </a>
 """
 
-    year_label, summary_html = internal_summary
-    summary_section = ""
-    if summary_html:
-        summary_section = f"""
+    year_label, internal_html = internal_summary
+    public_year, public_html = public_summary
+
+    # Use year from either summary
+    year = year_label or public_year
+
+    # Public summary section (for external/blog use)
+    public_section = ""
+    if public_html:
+        public_section = f"""
+        <div class="public-summary">
+            <div class="content">
+                {public_html}
+            </div>
+        </div>
+"""
+
+    # Internal summary section (for company use)
+    internal_section = ""
+    if internal_html:
+        internal_section = f"""
         <div class="internal-summary">
             <div class="content">
-                {summary_html}
+                {internal_html}
             </div>
         </div>
 """
 
     title = "Activity Reports"
-    if year_label:
-        title = f"{year_label} Year in Review"
+    if year:
+        title = f"{year} Year in Review"
 
     content = f"""
         <div class="hero">
-            <h1>{year_label + " " if year_label else ""}Activity <span class="gradient">Reports</span></h1>
+            <h1>{year + " " if year else ""}Activity <span class="gradient">Reports</span></h1>
             <p class="hero-subtitle">
                 Comprehensive summaries of development work, key achievements,
                 and technical progress across all projects.
             </p>
         </div>
-{summary_section}
+{public_section}
+{internal_section}
         <h2 class="clients-heading">Client Reports</h2>
         <div class="cards-grid">
 {cards_html}
@@ -2593,12 +2661,15 @@ def generate_html_reports(
     if not client_filter:
         output_dir.mkdir(parents=True, exist_ok=True)
         internal_summary = load_internal_summary(input_dir)
-        index_html = generate_index_page(clients, config, internal_summary)
+        public_summary = load_public_summary(input_dir)
+        index_html = generate_index_page(clients, config, internal_summary, public_summary)
         (output_dir / "index.html").write_text(index_html, encoding="utf-8")
         pages_generated += 1
         if verbose:
             if internal_summary[1]:
                 print("Loaded internal summary", file=sys.stderr)
+            if public_summary[1]:
+                print("Loaded public summary", file=sys.stderr)
             print("Generated: index.html", file=sys.stderr)
 
     for client in clients:
