@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2024 Year in Review</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <script>
+        (function() {
+            const saved = localStorage.getItem('theme');
+            if (saved) {
+                document.documentElement.setAttribute('data-theme', saved);
+            }
+        })();
+    </script>
+    <style>
+
+:root,
+[data-theme="light"] {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #f1f5f9;
+    --bg-tertiary: #e2e8f0;
+    --bg-card: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --border-color: #e2e8f0;
+    --code-color: #0f766e;
+    --code-bg: #f0fdfa;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --nav-bg: rgba(248, 250, 252, 0.9);
+    --bg-pattern-1: 5%;
+    --bg-pattern-2: 4%;
+    --accent-primary: #2FF6FB;
+    --accent-secondary: #047CC3;
+    --accent-gradient: linear-gradient(135deg, #2FF6FB 0%, #047CC3 100%);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    --shadow-glow: 0 0 20px color-mix(in srgb, #2FF6FB 20%, transparent);
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+}
+
+[data-theme="dark"] {
+    --bg-primary: #0f0f14;
+    --bg-secondary: #1a1a24;
+    --bg-tertiary: #252532;
+    --bg-card: #1e1e2a;
+    --text-primary: #e8e6e3;
+    --text-secondary: #9d9d9d;
+    --text-muted: #6b6b6b;
+    --border-color: #2d2d3d;
+    --code-color: #5eead4;
+    --code-bg: #1e293b;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+    --nav-bg: rgba(15, 15, 20, 0.9);
+    --bg-pattern-1: 8%;
+    --bg-pattern-2: 6%;
+    --radius-lg: 16px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-body);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.7;
+    font-size: 16px;
+    min-height: 100vh;
+}
+
+/* Background pattern */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:
+        radial-gradient(ellipse at 20% 0%, color-mix(in srgb, var(--accent-primary) var(--bg-pattern-1), transparent) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 100%, color-mix(in srgb, var(--accent-secondary) var(--bg-pattern-2), transparent) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+a {
+    color: var(--accent-secondary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: var(--accent-primary);
+}
+
+/* Navigation */
+.nav {
+    position: sticky;
+    top: 0;
+    background: var(--nav-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 1000;
+    padding: 0 2rem;
+}
+
+.nav-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 72px;
+}
+
+/* Collab brand header */
+.nav-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    color: var(--text-primary);
+    transition: opacity 0.2s ease;
+    text-decoration: none;
+    padding: 0.5rem 0;
+}
+
+.nav-brand:hover {
+    opacity: 0.85;
+    color: var(--text-primary);
+}
+
+.nav-brand-company {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+}
+
+.nav-brand-company svg {
+    height: 20px;
+    width: auto;
+}
+
+.nav-brand-separator {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    line-height: 1;
+}
+
+.nav-brand-client {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.01em;
+}
+
+.nav-brand-client-logo {
+    display: flex;
+    align-items: center;
+}
+
+.nav-brand-client-logo svg {
+    height: 24px;
+    width: auto;
+    max-width: 120px;
+}
+
+/* Simple brand for index page */
+.nav-brand-simple {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-primary);
+    transition: opacity 0.2s ease;
+    text-decoration: none;
+}
+
+.nav-brand-simple:hover {
+    opacity: 0.85;
+    color: var(--text-primary);
+}
+
+.nav-brand-simple svg {
+    height: 32px;
+    width: auto;
+}
+
+/* Standalone collab header (for client pages) */
+.collab-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 2rem 1rem;
+    gap: 0.25rem;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: opacity 0.2s ease;
+}
+
+.collab-header:hover {
+    opacity: 0.9;
+    color: var(--text-primary);
+}
+
+.collab-header-company {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.collab-header-company svg {
+    height: 48px;
+    width: auto;
+}
+
+.collab-header-separator {
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    margin: 0.25rem 0;
+    font-weight: 300;
+}
+
+.collab-header-client {
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    font-weight: 800;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+}
+
+.collab-header-client-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.collab-header-client-logo svg {
+    height: 52px;
+    width: auto;
+    max-width: 240px;
+}
+
+/* Year subtitle for summary pages */
+.year-subtitle {
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 2rem;
+}
+
+.nav-links {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.nav-link {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.nav-link.active {
+    background: var(--accent-gradient);
+    color: var(--bg-primary);
+}
+
+/* Theme toggle */
+.theme-toggle {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    transition: all 0.2s ease;
+    color: var(--text-secondary);
+}
+
+.theme-toggle:hover {
+    background: var(--bg-secondary);
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
+}
+
+.theme-toggle svg {
+    width: 18px;
+    height: 18px;
+}
+
+.theme-toggle .sun-icon {
+    display: none;
+}
+
+.theme-toggle .moon-icon {
+    display: block;
+}
+
+[data-theme="dark"] .theme-toggle .sun-icon {
+    display: block;
+}
+
+[data-theme="dark"] .theme-toggle .moon-icon {
+    display: none;
+}
+
+/* Standalone header wrapper (for client pages) */
+.standalone-header-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem 2rem 0;
+    gap: 0.5rem;
+    position: relative;
+}
+
+.standalone-header-wrapper .theme-toggle {
+    position: absolute;
+    top: 0.75rem;
+    right: 1.5rem;
+}
+
+/* Main content */
+.main {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 3rem 2rem 5rem;
+}
+
+/* Hero section */
+.hero {
+    text-align: center;
+    padding: 4rem 0;
+    margin-bottom: 3rem;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 1rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 100px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.hero-badge::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: var(--success);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+}
+
+.hero h1 .gradient {
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Internal summary section */
+.internal-summary {
+    max-width: 900px;
+    margin: 0 auto 3rem;
+}
+
+.internal-summary .content {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+}
+
+.clients-heading {
+    max-width: 900px;
+    margin: 0 auto 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Cards grid */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent-gradient);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.card:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-glow);
+}
+
+.card:hover::before {
+    opacity: 1;
+}
+
+.card-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.card-logo {
+    height: 40px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.card-logo svg {
+    height: 100%;
+    width: auto;
+    max-width: 140px;
+}
+
+.card h3 {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.card p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+}
+
+.card-meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.card-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+/* Period navigation */
+.period-nav {
+    margin-bottom: 0.5rem;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.back-link:hover {
+    color: var(--accent-secondary);
+}
+
+/* Page header */
+.page-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.breadcrumb a {
+    color: var(--text-secondary);
+}
+
+.breadcrumb span {
+    color: var(--text-muted);
+}
+
+.page-header h1 {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.02em;
+}
+
+.page-header .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.page-header .meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* Stats grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stats-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+}
+
+.stats-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.stats-icon {
+    font-size: 1rem;
+}
+
+.stats-value {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+/* Content styling */
+.content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+}
+
+.content h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 2.5rem 0 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.content h2:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+.content h3 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 2rem 0 0.75rem;
+    color: var(--text-primary);
+}
+
+.content p {
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+}
+
+.content p:last-child {
+    margin-bottom: 0;
+}
+
+.content strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.content em {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.content ul, .content ol {
+    margin: 1rem 0 1.5rem;
+    padding-left: 1.5rem;
+}
+
+.content li {
+    margin-bottom: 0.6rem;
+    color: var(--text-secondary);
+}
+
+.content li strong {
+    color: var(--text-primary);
+}
+
+.content code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--code-bg);
+    padding: 0.2em 0.5em;
+    border-radius: var(--radius-sm);
+    color: var(--code-color);
+}
+
+.content pre {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+}
+
+.content pre code {
+    background: none;
+    padding: 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.content blockquote {
+    border-left: 3px solid var(--accent-primary);
+    padding-left: 1.25rem;
+    margin: 1.5rem 0;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.content hr {
+    border: none;
+    height: 1px;
+    background: var(--border-color);
+    margin: 2rem 0;
+}
+
+/* Tables */
+.content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.95rem;
+}
+
+.content th, .content td {
+    text-align: left;
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.content th {
+    background: var(--bg-tertiary);
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.content th:first-child {
+    border-top-left-radius: var(--radius-sm);
+}
+
+.content th:last-child {
+    border-top-right-radius: var(--radius-sm);
+}
+
+.content td {
+    color: var(--text-secondary);
+}
+
+.content tr:hover td {
+    background: color-mix(in srgb, var(--accent-primary) 5%, transparent);
+}
+
+/* Charts section */
+.charts-section {
+    margin: 2rem 0 3rem;
+}
+
+.charts-section h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.chart-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.chart-container h3 {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+}
+
+.chart-container canvas {
+    width: 100% !important;
+}
+
+/* Period navigation */
+.periods-section {
+    margin-top: 3rem;
+}
+
+.periods-section h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+.periods-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.period-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.period-link:hover {
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+}
+
+.period-link.current {
+    background: var(--accent-gradient);
+    border-color: transparent;
+    color: var(--bg-primary);
+    cursor: default;
+}
+
+.period-link.current:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.period-link.current .month,
+.period-link.current .year {
+    color: var(--bg-primary);
+}
+
+.period-link .month {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.period-link .year {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+/* Footer */
+.footer {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.footer a {
+    color: var(--text-secondary);
+}
+
+.footer a:hover {
+    color: var(--accent-primary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .nav {
+        padding: 0 1rem;
+    }
+
+    .nav-inner {
+        height: 64px;
+    }
+
+    .nav-brand-company {
+        font-size: 0.75rem;
+    }
+
+    .nav-brand-company svg {
+        height: 16px;
+    }
+
+    .nav-brand-client {
+        font-size: 0.95rem;
+    }
+
+    .nav-brand-simple svg {
+        height: 24px;
+    }
+
+    .nav-links {
+        gap: 0.25rem;
+    }
+
+    .nav-link {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .main {
+        padding: 2rem 1rem 4rem;
+    }
+
+    .hero {
+        padding: 2rem 0;
+    }
+
+    .content {
+        padding: 1.5rem;
+    }
+
+    .cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+    }
+}
+
+    </style>
+</head>
+<body>
+    
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="https://www.nrbtech.io/" class="nav-brand-simple" target="_blank" rel="noopener">
+                <?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 23.0.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="svg1_Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 500 120" style="enable-background:new 0 0 500 120;" xml:space="preserve">
+<style type="text/css">
+	.svg1_st0{fill-rule:evenodd;clip-rule:evenodd;fill:url(#svg1_SVGID_1_);}
+	.svg1_st1{fill:#0D3B66;}
+</style>
+<g>
+	<linearGradient id="svg1_SVGID_1_" gradientUnits="userSpaceOnUse" x1="75.1338" y1="10.4044" x2="75.1338" y2="103.9118">
+		<stop  offset="0" style="stop-color:#2FF6FB"/>
+		<stop  offset="1" style="stop-color:#047CC3"/>
+	</linearGradient>
+	<path class="svg1_st0" d="M54.5,26.38c2.9-2.9,2.91-7.61,0-10.52c-2.91-2.91-7.61-2.91-10.52,0c-2.9,2.9-2.9,7.61,0,10.52
+		C46.9,29.28,51.6,29.28,54.5,26.38L54.5,26.38z M95.77,67.82c-2.9,2.9-2.91,7.61,0,10.52c2.91,2.91,7.61,2.91,10.52,0
+		c2.9-2.9,2.9-7.61,0-10.52C103.37,64.92,98.67,64.92,95.77,67.82L95.77,67.82z M95.77,26.38c-2.91-2.9-2.91-7.61-0.01-10.52
+		c2.91-2.91,7.61-2.91,10.52,0c2.91,2.91,2.9,7.61,0,10.52C103.37,29.28,98.67,29.28,95.77,26.38L95.77,26.38z M54.5,67.82
+		c2.9,2.9,2.91,7.61,0,10.52c-2.91,2.91-7.61,2.91-10.52,0c-2.9-2.9-2.9-7.61,0-10.52C46.89,64.92,51.6,64.92,54.5,67.82L54.5,67.82
+		z M119.02,47.1c0-4.11,3.32-7.44,7.43-7.44c4.11,0,7.44,3.33,7.44,7.44c0,4.11-3.33,7.43-7.44,7.43
+		C122.35,54.54,119.02,51.21,119.02,47.1L119.02,47.1z M31.25,47.11c0-4.11-3.33-7.44-7.43-7.44c-4.11,0-7.44,3.33-7.44,7.44
+		c0,4.11,3.33,7.43,7.44,7.43C27.92,54.54,31.24,51.21,31.25,47.11L31.25,47.11z M82.57,47.11c0-4.11-3.33-7.44-7.43-7.44
+		c-4.11,0-7.44,3.33-7.44,7.44c0,4.11,3.33,7.43,7.44,7.43C79.24,54.54,82.57,51.21,82.57,47.11L82.57,47.11z M75.14,91.44
+		c-4.11,0-7.44,3.32-7.44,7.43c0,4.11,3.33,7.44,7.44,7.44c4.11,0,7.43-3.33,7.43-7.44C82.57,94.77,79.24,91.44,75.14,91.44
+		L75.14,91.44z M77.78,59.65v9.16c0,6.67,2.35,15,6.42,20.35c2.27,2.98,4.23,5.81,4.23,9.71c0,7.34-5.95,13.3-13.3,13.3
+		c-7.35,0-13.3-5.95-13.3-13.3c0-3.87,1.97-6.75,4.23-9.71c4.07-5.35,6.42-13.68,6.42-20.35v-9.16c-1.37-0.29-2.67-0.8-3.84-1.48
+		c-3.07,4.34-5.46,9.64-6.12,14.46c-0.5,3.69-1.14,7.12-3.88,9.86c-5.2,5.2-13.62,5.2-18.81,0c-5.2-5.19-5.19-13.61,0-18.81
+		c2.76-2.76,6.15-3.38,9.86-3.88c4.82-0.65,10.1-3.04,14.43-6.1c-0.72-1.2-1.26-2.53-1.55-3.95l-8.71,0c-6.67,0-15,2.35-20.35,6.42
+		c-2.98,2.27-5.81,4.23-9.71,4.23c-7.34,0-13.3-5.95-13.3-13.3c0-7.35,5.95-13.3,13.3-13.3c3.87,0,6.75,1.97,9.71,4.23
+		c5.35,4.08,13.68,6.42,20.35,6.42h8.71c0.3-1.42,0.83-2.75,1.55-3.95c-4.34-3.05-9.62-5.44-14.43-6.1c-3.71-0.5-7.1-1.12-9.86-3.88
+		c-5.19-5.19-5.2-13.61,0-18.81c5.2-5.2,13.62-5.2,18.81,0c2.74,2.74,3.38,6.17,3.88,9.86c0.65,4.83,3.05,10.12,6.12,14.46
+		c1.9-1.12,4.12-1.76,6.49-1.76c2.36,0,4.58,0.64,6.48,1.76c3.07-4.34,5.46-9.64,6.12-14.46c0.5-3.69,1.14-7.12,3.88-9.86
+		c5.2-5.19,13.62-5.19,18.81,0c5.19,5.19,5.19,13.61,0,18.81c-2.76,2.76-6.15,3.37-9.86,3.88c-4.81,0.65-10.09,3.04-14.43,6.1
+		c0.72,1.2,1.25,2.53,1.55,3.95h8.71c6.67,0,15-2.35,20.35-6.42c2.96-2.25,5.84-4.23,9.71-4.23c7.35,0,13.3,5.95,13.3,13.3
+		c0,7.35-5.96,13.3-13.3,13.3c-3.91,0-6.74-1.96-9.71-4.23c-5.35-4.07-13.68-6.42-20.35-6.42h-8.71c-0.3,1.42-0.83,2.75-1.55,3.95
+		c4.34,3.05,9.62,5.44,14.43,6.1c3.71,0.5,7.1,1.12,9.86,3.88c5.19,5.19,5.2,13.61,0,18.81c-5.2,5.2-13.62,5.2-18.81,0
+		c-2.74-2.74-3.38-6.17-3.88-9.86c-0.65-4.83-3.05-10.12-6.12-14.46C80.45,58.85,79.15,59.36,77.78,59.65L77.78,59.65z"/>
+	<path class="svg1_st1" d="M203.47,81.59V38.41h-8v31.43l-17.88-31.43h-9.11v43.17h8.01V50.21l18.05,31.37H203.47L203.47,81.59z
+		 M253.46,81.59l-11.69-15.95c7.77-1.93,11.28-6.66,11.28-13.38c0-4.38-1.58-8.12-4.56-10.63c-2.81-2.4-5.9-3.21-11.8-3.21h-12.44
+		v43.17h8.01V65.05l11.33,16.53H253.46L253.46,81.59z M244.99,52.49c0,4.56-2.63,6.54-8.82,6.54h-3.91V46.07h3.56
+		C243.41,46.07,244.99,48.64,244.99,52.49L244.99,52.49z M298.71,68.73c0-5.14-1.87-8.41-7.36-10.69c3.45-1.81,4.79-4.09,4.79-8.12
+		s-1.81-7.42-4.91-9.41c-2.57-1.64-5.26-2.1-11.68-2.1h-8.88v43.17h11.51C293.27,81.59,298.71,76.62,298.71,68.73L298.71,68.73
+		L298.71,68.73z M290.64,68.56c0,3.74-2.39,5.38-8,5.38h-3.97V62.89h3.8C288.01,62.89,290.64,64.7,290.64,68.56L290.64,68.56z
+		 M288.13,50.62c0,3.1-2.05,4.44-6.89,4.44h-2.57v-8.82h3.27C286.09,46.24,288.13,47.64,288.13,50.62L288.13,50.62L288.13,50.62z
+		 M337.59,42.33v-3.91h-24.07v3.91h9.87v39.26h4.32V42.33H337.59L337.59,42.33z M378.45,81.59v-3.91h-19.28V61.72h18.64v-3.91
+		h-18.64V42.33h19.28v-3.91h-23.6v43.17H378.45L378.45,81.59z M439.11,70.25h-4.79c-4.56,5.73-8.71,8.12-15.02,8.12
+		c-9.99,0-18.23-8.3-18.23-18.4c0-10.4,7.89-18.35,18.17-18.35c6.08,0,11.16,2.22,14.84,8h4.85c-3.33-7.42-10.92-11.98-19.86-11.98
+		c-12.85,0-22.38,9.58-22.38,22.49c0,12.62,9.76,22.2,22.67,22.2C428.13,82.35,434.79,78.26,439.11,70.25L439.11,70.25z
+		 M489.49,81.59V38.41h-4.32V57.4h-22.38V38.41h-4.32v43.17h4.32V61.32h22.38v20.27H489.49L489.49,81.59z"/>
+</g>
+</svg>
+
+            </a>
+            <div class="nav-links">
+<a href="index.html" class="nav-link active">Overview</a>
+<a href="acme_widgets/index.html" class="nav-link">Acme Widgets</a>
+<a href="techstart/index.html" class="nav-link">TechStart</a>
+
+                <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+            <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="5"></circle>
+                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+            </svg>
+            <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+        </button>
+            </div>
+        </div>
+    </nav>
+
+
+    <main class="main">
+        
+        
+        <div class="hero">
+            <h1>2024 Activity <span class="gradient">Reports</span></h1>
+            <p class="hero-subtitle">
+                Comprehensive summaries of development work, key achievements,
+                and technical progress across all projects.
+            </p>
+        </div>
+
+        <div class="internal-summary">
+            <div class="content">
+                <h2>Combined Overview</h2>
+<div class="stats-grid"><div class="stats-item">
+                <div class="stats-label"><span class="stats-icon">📊</span>Stats</div>
+                <div class="stats-value">668 commits, +39,311/-15,391 lines, 765 files, 100 active days</div>
+            </div><div class="stats-item">
+                <div class="stats-label"><span class="stats-icon">💻</span>Languages</div>
+                <div class="stats-value">Swift (+13,257), C (+7,388), TypeScript (+7,344), Python (+2,693), Config (+3,848)</div>
+            </div><div class="stats-item">
+                <div class="stats-label"><span class="stats-icon">📁</span>Projects</div>
+                <div class="stats-value">techstart-ios (269), widget-firmware (219), techstart-api (94), techstart-web (39), widget-cli (35)</div>
+            </div></div>
+<h2>Company Year in Review</h2>
+<p>The fourth quarter of 2024 demonstrated our versatility across the technology spectrum, from bare-metal embedded systems to modern mobile applications. We successfully delivered production-ready solutions for two very different clients: a complete firmware modernization for Acme Widgets and a full-featured iOS application launch for TechStart.</p>
+<p>Our embedded systems work showcased deep expertise in real-time operating systems, secure firmware updates, and hardware-software integration. Meanwhile, our mobile development demonstrated mastery of modern Swift/SwiftUI patterns, real-time collaboration systems, and offline-first architecture. This breadth of capability positions us uniquely to tackle complex projects that span multiple technology domains.</p>
+<p>Both projects emphasized reliability and maintainability: the widget firmware features comprehensive automated testing and secure OTA updates, while the TechStart app employs event sourcing and conflict-free sync for bulletproof data integrity. This focus on "production-ready" engineering differentiates our work from prototype-quality deliverables.</p>
+<h2>Client Highlights</h2>
+<ul>
+<li><strong>Acme Widgets:</strong> Transformed legacy bare-metal firmware into a modern RTOS-based platform with secure OTA updates, comprehensive sensor fusion, and manufacturing automation.
+</li>
+<li><strong>TechStart:</strong> Delivered a feature-complete iOS application with real-time collaboration, offline-first architecture, and successful App Store submission in a single quarter.
+</li></ul>
+<h2>Technical Capabilities Demonstrated</h2>
+<ul>
+<li><strong>Embedded Systems:</strong> FreeRTOS task design, power management implementation, secure bootloader development, I2C/SPI sensor integration, and hardware-in-the-loop testing.
+</li>
+<li><strong>Mobile Development:</strong> SwiftUI/Combine architecture, Core Data integration, WebSocket real-time communication, push notification implementation, and App Store compliance.
+</li>
+<li><strong>Backend Development:</strong> Node.js/Express API development, PostgreSQL database design, Redis pub/sub integration, and JWT authentication systems.
+</li>
+<li><strong>DevOps &amp; Quality:</strong> CI/CD pipeline setup, automated testing frameworks, crash reporting integration, and performance monitoring.
+</li></ul>
+<h2>Key Metrics</h2>
+<ul>
+<li><strong>Total Commits:</strong> 668
+</li>
+<li><strong>Code Volume:</strong> +39,311 lines added / -15,391 lines removed
+</li>
+<li><strong>Clients Served:</strong> 2 Major Accounts
+</li>
+<li><strong>Technologies Used:</strong> C, Swift, TypeScript, Python, FreeRTOS, SwiftUI, Combine, Node.js, PostgreSQL, Redis, Firebase
+</li></ul>
+            </div>
+        </div>
+
+        <h2 class="clients-heading">Client Reports</h2>
+        <div class="cards-grid">
+
+        <a href="acme_widgets/index.html" class="card">
+            <div class="card-icon">📊</div>
+            <h3>Acme Widgets</h3>
+            <div class="card-meta">
+                <span>📅 3 periods</span>
+                <span>🕐 Latest: December 2024</span>
+            </div>
+        </a>
+
+        <a href="techstart/index.html" class="card">
+            <div class="card-icon">📊</div>
+            <h3>TechStart</h3>
+            <div class="card-meta">
+                <span>📅 3 periods</span>
+                <span>🕐 Latest: December 2024</span>
+            </div>
+        </a>
+
+        </div>
+
+    </main>
+
+    <footer class="footer">
+        Generated on January 06, 2026 by <a href="https://www.nrbtech.io/" target="_blank" rel="noopener">NRB Tech Ltd</a>
+    </footer>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        }
+    </script>
+</body>
+</html>

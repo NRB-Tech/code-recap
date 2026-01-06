@@ -16,6 +16,14 @@ Generate beautiful activity reports, client summaries, and blog posts from your 
 
 🗂️ **Multi-Client Organization** — Automatically group repositories by client using pattern matching. Each client gets their own reports.
 
+### 📝 Example Output
+
+See what generated reports look like:
+
+- [**Example HTML Report**](https://nrb-tech.github.io/code-recap/output.example/html/) — Browse the styled HTML version
+- [Monthly summary (markdown)](output.example/acme_widgets/periods/2024-10.md)
+- [Annual client summary (markdown)](output.example/acme_widgets/summary-2024.md)
+
 ---
 
 ## Use Cases
@@ -23,27 +31,27 @@ Generate beautiful activity reports, client summaries, and blog posts from your 
 ### Year-end report
 
 ```bash
-./summarize_activity.py 2025 --author "Your Name"
-./generate_html_report.py
-# → Reports saved to output/html/
+code-recap 2025 --author "Your Name"
+generate-html-report
+# → Reports saved to ./code-recap-2025/html/
 ```
 
 ### Daily time logging
 
 ```bash
-./summarize_daily_activity.py --author "Your Name" --date yesterday
+summarize-daily-activity --author "Your Name" --date yesterday
 ```
 
 ### Blog post from your commits
 
 ```bash
-./generate_blog_post.py full "Building a Custom Protocol" --period 2025-Q3 --author "Your Name"
+generate-blog-post full "Building a Custom Protocol" --period 2025-Q3 --author "Your Name"
 ```
 
 ### Multi-year statistics (CSV export)
 
 ```bash
-./git_activity_review.py 2020:2025 --author "Your Name" --granularity year --format csv
+git-activity-review 2020:2025 --author "Your Name" --granularity year --format csv
 ```
 
 ---

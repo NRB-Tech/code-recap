@@ -256,3 +256,4 @@ config/
 
 # Output directory
 output*/
+!output.example/
