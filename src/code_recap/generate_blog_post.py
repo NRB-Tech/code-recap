@@ -30,6 +30,7 @@ from code_recap.git_utils import (
     discover_top_level_repos,
     fetch_repos_with_progress,
     get_commits_with_diffs,
+    get_git_config_author,
     run_git,
 )
 
@@ -724,9 +725,9 @@ def add_research_args(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--author",
-        required=True,
         help=(
             "Author name or email pattern to filter commits. "
+            "Defaults to git config user.name. "
             "Supports partial matching: 'John', 'john@example.com', or '@example.com' for domain."
         ),
     )
@@ -769,6 +770,18 @@ def cmd_research(args: argparse.Namespace) -> int:
     Returns:
         Exit code (0 for success).
     """
+    # Use git config author as default if not provided
+    if not args.author:
+        args.author = get_git_config_author()
+        if not args.author:
+            print(
+                "Error: --author is required (git config user.name not set). "
+                "Set it with: git config --global user.name 'Your Name'",
+                file=sys.stderr,
+            )
+            return 1
+        print(f"Using author from git config: {args.author}", file=sys.stderr)
+
     # Read topic from stdin if '-'
     if args.topic == "-":
         topic = sys.stdin.read().strip()
@@ -948,6 +961,18 @@ def cmd_full(args: argparse.Namespace) -> int:
     Returns:
         Exit code (0 for success).
     """
+    # Use git config author as default if not provided
+    if not args.author:
+        args.author = get_git_config_author()
+        if not args.author:
+            print(
+                "Error: --author is required (git config user.name not set). "
+                "Set it with: git config --global user.name 'Your Name'",
+                file=sys.stderr,
+            )
+            return 1
+        print(f"Using author from git config: {args.author}", file=sys.stderr)
+
     # Read topic from stdin if '-'
     if args.topic == "-":
         topic = sys.stdin.read().strip()
@@ -1154,16 +1179,14 @@ def main(argv: Optional[list[str]] = None) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Stage 1: Research
-  %(prog)s research "Building a Real-Time LED Controller" \\
-      --period 2025-09 --author "Your Name" --client "Client Name"
+  # Stage 1: Research (uses git config user.name by default)
+  %(prog)s research "Building a Real-Time LED Controller" --period 2025-09
 
   # Stage 2: Write (after reviewing/editing research)
   %(prog)s write output/blog/building-a-real-time-led-controller/research.md
 
   # Combined: Run both stages
-  %(prog)s full "Building a Real-Time LED Controller" \\
-      --period 2025-09 --author "Your Name"
+  %(prog)s full "Building a Real-Time LED Controller" --period 2025-09
         """,
     )
 

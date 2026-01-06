@@ -41,6 +41,25 @@ def run_git(repo_path: str, args: Sequence[str]) -> tuple[int, str, str]:
     return proc.returncode, out, err
 
 
+def get_git_config_author() -> Optional[str]:
+    """Gets the default author name from git config.
+
+    Returns:
+        The user.name from git config, or None if not set.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "config", "--get", "user.name"],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip()
+    except Exception:
+        pass
+    return None
+
+
 def is_git_repo(path: str) -> bool:
     """Determines whether the directory at `path` is a git repository.
 

@@ -55,7 +55,7 @@ LLM prompts should be aware of the target audience and adjust tone accordingly.
 
 ### 4. Code Style
 
-- Use `ruff` for linting and formatting
+- **ALWAYS** Use `ruff` for linting and formatting
 - Follow existing patterns for CLI argument parsing (argparse)
 - Add docstrings to all public functions with Args/Returns sections
 - Keep scripts executable with `#!/usr/bin/env python3`

@@ -41,6 +41,7 @@ from code_recap.git_utils import (
     fetch_repos_with_progress,
     get_commit_messages,
     get_commits_with_diffs,
+    get_git_config_author,
 )
 from code_recap.paths import (
     get_config_path,
@@ -1183,10 +1184,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s 2024 --author "Your Name" --granularity month
-  %(prog)s 2024 --author "@example.com" --granularity month  # Match by email domain
-  %(prog)s 2024 --author "Your Name" --model gemini/gemini-2.0-flash
-  %(prog)s 2020:2025 --author "Your Name" --granularity year
+  %(prog)s 2024                                      # Uses git config user.name
+  %(prog)s 2024 --author "@example.com"              # Match by email domain
+  %(prog)s 2024 --model gemini/gemini-2.0-flash
+  %(prog)s 2020:2025 --granularity year
 
 Models (LiteLLM format):
   gpt-4o-mini                              OpenAI (cheapest, default)
@@ -1213,7 +1214,8 @@ Environment variables for API keys:
     parser.add_argument(
         "--author",
         help=(
-            "Author name or email pattern to filter commits (required unless --list-models). "
+            "Author name or email pattern to filter commits. "
+            "Defaults to git config user.name. "
             "Supports partial matching: 'John', 'john@example.com', or '@example.com' for domain."
         ),
     )
@@ -1365,8 +1367,16 @@ Environment variables for API keys:
     # Validate required arguments for normal operation
     if not args.period:
         parser.error("period is required (unless using --list-models)")
+
+    # Use git config author as default if not provided
     if not args.author:
-        parser.error("--author is required (unless using --list-models)")
+        args.author = get_git_config_author()
+        if not args.author:
+            parser.error(
+                "--author is required (git config user.name not set). "
+                "Set it with: git config --global user.name 'Your Name'"
+            )
+        print(f"Using author from git config: {args.author}", file=sys.stderr)
 
     root = os.path.abspath(args.root)
 

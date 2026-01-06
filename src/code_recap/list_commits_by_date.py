@@ -11,6 +11,7 @@ from typing import Optional
 from code_recap.git_utils import (
     discover_all_submodules,
     discover_top_level_repos,
+    get_git_config_author,
     run_git,
 )
 from code_recap.paths import get_default_output_dir_name, get_default_scan_root, get_output_dir
@@ -352,9 +353,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     parser.add_argument(
         "--author",
-        default=None,
         help=(
             "Author name or email pattern to filter commits. "
+            "Defaults to git config user.name. "
             "Supports partial matching: 'John', 'john@example.com', or '@example.com' for domain."
         ),
     )
@@ -386,6 +387,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
 
     args = parser.parse_args(argv)
+
+    # Use git config author as default if not provided
+    if not args.author:
+        args.author = get_git_config_author()
+        if args.author:
+            print(f"Using author from git config: {args.author}")
+
     root = os.path.abspath(args.root)
     since_str, until_str = parse_date_to_range(args.date)
 

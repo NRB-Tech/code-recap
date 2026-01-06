@@ -31,26 +31,26 @@ See what generated reports look like:
 ### Year-end report with HTML
 
 ```bash
-code-recap summarize 2025 --author "Your Name" --html --open
+code-recap summarize 2025 --html --open
 # → Reports saved to ./code-recap-2025/ (markdown + HTML)
 ```
 
 ### Daily time logging
 
 ```bash
-code-recap daily --author "Your Name" --date yesterday
+code-recap daily --date yesterday
 ```
 
 ### Blog post from your commits
 
 ```bash
-code-recap blog full "Building a Custom Protocol" --period 2025-Q3 --author "Your Name"
+code-recap blog full "Building a Custom Protocol" --period 2025-Q3
 ```
 
 ### Multi-year statistics (CSV export)
 
 ```bash
-code-recap stats 2020:2025 --author "Your Name" --granularity year --format csv
+code-recap stats 2020:2025 --granularity year --format csv
 ```
 
 ---
@@ -101,7 +101,7 @@ export OPENAI_API_KEY='sk-...'
 
 # Generate your year-in-review
 cd ~/Documents/Repos
-uvx code-recap summarize 2025 --author "Your Name" --html --open
+uvx code-recap summarize 2025 --html --open
 # → Output: ./code-recap-2025/
 ```
 
@@ -111,7 +111,7 @@ That's it! Your reports open automatically in the browser.
 
 ```bash
 # Run directly (no install)
-uvx code-recap summarize 2025 --author "Your Name"
+uvx code-recap summarize 2025
 
 # Or install globally
 uv tool install code-recap    # then use: code-recap summarize ...
@@ -145,9 +145,9 @@ Code Recap uses [LiteLLM](https://docs.litellm.ai/) to support multiple LLM prov
 
 ```bash
 # Examples
-code-recap summarize 2025 --author "Your Name"                              # Uses default (GPT-4o-mini)
-code-recap summarize 2025 --author "Your Name" --model gemini/gemini-2.0-flash
-code-recap summarize --list-models                                           # See all available models
+code-recap summarize 2025                                            # Uses default (GPT-4o-mini)
+code-recap summarize 2025 --model gemini/gemini-2.0-flash
+code-recap summarize --list-models                                   # See all available models
 ```
 
 ---
@@ -175,11 +175,11 @@ Commands:
 Generates narrative summaries of git activity using hierarchical LLM summarization.
 
 ```bash
-code-recap summarize 2025 --author "Your Name"                    # All clients
-code-recap summarize 2025 --author "Your Name" --client "Acme"    # Specific client
-code-recap summarize 2025 --author "@company.com"                 # Match by email domain
-code-recap summarize 2025 --author "Your Name" --html --open      # With HTML + open browser
-code-recap summarize 2025 --author "Your Name" --dry-run          # Preview (no API cost)
+code-recap summarize 2025                               # All clients
+code-recap summarize 2025 --client "Acme"               # Specific client
+code-recap summarize 2025 --author "@company.com"       # Match by email domain
+code-recap summarize 2025 --html --open                 # With HTML + open browser
+code-recap summarize 2025 --dry-run                     # Preview (no API cost)
 ```
 
 | Option | Description | Default |
@@ -199,10 +199,10 @@ code-recap summarize 2025 --author "Your Name" --dry-run          # Preview (no 
 Generates concise summaries for a specific date—perfect for time tracking and billing.
 
 ```bash
-code-recap daily --author "Your Name"                  # Today
-code-recap daily --author "Your Name" --date yesterday
-code-recap daily --author "Your Name" --date -2        # 2 days ago
-code-recap daily --author "Your Name" --no-llm         # Just list commits
+code-recap daily                           # Today
+code-recap daily --date yesterday
+code-recap daily --date -2                 # 2 days ago
+code-recap daily --no-llm                  # Just list commits
 ```
 
 ---
@@ -212,9 +212,9 @@ code-recap daily --author "Your Name" --no-llm         # Just list commits
 Generates detailed statistics with support for text, markdown, and CSV output.
 
 ```bash
-code-recap stats 2025 --author "Your Name"
-code-recap stats 2020:2025 --author "Your Name" --granularity year --format csv
-code-recap stats 2025-Q3 --author "Your Name" --format markdown
+code-recap stats 2025
+code-recap stats 2020:2025 --granularity year --format csv
+code-recap stats 2025-Q3 --format markdown
 ```
 
 **Output includes:** commit counts, line changes, per-language breakdown, per-project stats, active days, and coding streaks.
@@ -227,11 +227,10 @@ Two-stage pipeline: research commits first, then generate a polished blog post.
 
 ```bash
 # Full pipeline
-code-recap blog full "Building a Real-Time LED Controller" \
-    --period 2025-09 --author "Your Name"
+code-recap blog full "Building a Real-Time LED Controller" --period 2025-09
 
 # Or step by step (allows editing research before writing)
-code-recap blog research "My Topic" --period 2025-Q3 --author "Your Name"
+code-recap blog research "My Topic" --period 2025-Q3
 code-recap blog write output/blog/my-topic/research.md
 ```
 
@@ -253,8 +252,8 @@ code-recap html --client "Acme"       # Just one client
 Lists all commits for a specific date across all repositories.
 
 ```bash
-code-recap commits 2025-01-03 --author "Your Name"
-code-recap commits $(date +%Y-%m-%d) --author "Your Name"  # Today
+code-recap commits 2025-01-03
+code-recap commits $(date +%Y-%m-%d)  # Today
 ```
 
 ---
@@ -376,9 +375,9 @@ cd ~/Documents/Repos/code-recap
 uv tool install .
 
 # Or run directly
-uv run code-recap summarize 2024 --author "Your Name"
-uv run code-recap stats 2024 --author "Your Name"
-uv run code-recap commits 2024-01-15 --author "Your Name"
+uv run code-recap summarize 2024
+uv run code-recap stats 2024
+uv run code-recap commits 2024-01-15
 uv run code-recap git fetch
 ```
 
@@ -391,7 +390,7 @@ cd ~/Documents/Repos/code-recap
 pip install -e .
 
 # Then run
-code-recap summarize 2024 --author "Your Name"
+code-recap summarize 2024
 ```
 
 ### Development
@@ -422,7 +421,7 @@ Most scripts share these options:
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--root` | Root directory containing repos | Parent of cwd |
-| `--author` | Filter commits by author | Required |
+| `--author` | Filter commits by author | git config user.name |
 | `--client` | Client name for organizing outputs | (none) |
 | `--output-dir` | Base output directory | `output/` |
 | `-o, --output` | Explicit output file path | Auto-generated |

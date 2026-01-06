@@ -21,6 +21,7 @@ from code_recap.git_utils import (
     discover_all_submodules,
     discover_top_level_repos,
     fetch_repos_with_progress,
+    get_git_config_author,
     run_git,
 )
 from code_recap.paths import (
@@ -1401,16 +1402,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s 2024 --author "Your Name"               # Full year
-  %(prog)s 2024 --author "@example.com"            # Match by email domain
-  %(prog)s 2024-Q3 --author "Your Name"            # Quarter
-  %(prog)s 2024-06 --author "Your Name"            # Month
-  %(prog)s 2024-W25 --author "Your Name"           # Week
-  %(prog)s 2024-06-01:2024-06-15 --author "Your Name"  # Custom range
+  %(prog)s 2024                                # Full year (uses git config user.name)
+  %(prog)s 2024 --author "@example.com"        # Match by email domain
+  %(prog)s 2024-Q3                             # Quarter
+  %(prog)s 2024-06                             # Month
+  %(prog)s 2024-W25                            # Week
+  %(prog)s 2024-06-01:2024-06-15               # Custom range
 
   # Range mode (CSV output for charting)
-  %(prog)s 2020:2025 --author "Your Name" --granularity year
-  %(prog)s 2024-01:2024-12 --author "Your Name" --granularity month --format csv
+  %(prog)s 2020:2025 --granularity year
+  %(prog)s 2024-01:2024-12 --granularity month --format csv
         """,
     )
     parser.add_argument(
@@ -1422,9 +1423,9 @@ Examples:
     )
     parser.add_argument(
         "--author",
-        required=True,
         help=(
             "Author name or email pattern to filter commits. "
+            "Defaults to git config user.name. "
             "Supports partial matching: 'John', 'john@example.com', or '@example.com' for domain."
         ),
     )
@@ -1524,6 +1525,17 @@ Examples:
     )
 
     args = parser.parse_args(argv)
+
+    # Use git config author as default if not provided
+    if not args.author:
+        args.author = get_git_config_author()
+        if not args.author:
+            parser.error(
+                "--author is required (git config user.name not set). "
+                "Set it with: git config --global user.name 'Your Name'"
+            )
+        print(f"Using author from git config: {args.author}", file=sys.stderr)
+
     root = os.path.abspath(args.root)
 
     # Build exclude configuration

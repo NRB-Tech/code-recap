@@ -22,6 +22,7 @@ from code_recap.git_utils import (
     discover_all_submodules,
     discover_top_level_repos,
     get_commits_with_diffs,
+    get_git_config_author,
     run_git,
 )
 from code_recap.paths import get_default_scan_root
@@ -418,12 +419,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s --author "Your Name"                 # Today's activity
-  %(prog)s --author "@example.com"             # Match by email domain
-  %(prog)s --author "Your Name" --date yesterday    # Yesterday's activity
-  %(prog)s --author "Your Name" --date 2025-01-03   # Specific date
-  %(prog)s --author "Your Name" --date -2           # 2 days ago
-  %(prog)s --author "Your Name" --no-llm            # Just list commits, no LLM
+  %(prog)s                              # Today's activity (uses git config user.name)
+  %(prog)s --author "@example.com"      # Match by email domain
+  %(prog)s --date yesterday             # Yesterday's activity
+  %(prog)s --date 2025-01-03            # Specific date
+  %(prog)s --date -2                    # 2 days ago
+  %(prog)s --no-llm                     # Just list commits, no LLM
 
 Models (LiteLLM format):
   gpt-4o-mini                              OpenAI (cheapest, default)
@@ -441,9 +442,9 @@ Models (LiteLLM format):
     )
     parser.add_argument(
         "--author",
-        required=True,
         help=(
             "Author name or email pattern to filter commits. "
+            "Defaults to git config user.name. "
             "Supports partial matching: 'John', 'john@example.com', or '@example.com' for domain."
         ),
     )
@@ -486,6 +487,16 @@ Models (LiteLLM format):
     )
 
     args = parser.parse_args(argv)
+
+    # Use git config author as default if not provided
+    if not args.author:
+        args.author = get_git_config_author()
+        if not args.author:
+            parser.error(
+                "--author is required (git config user.name not set). "
+                "Set it with: git config --global user.name 'Your Name'"
+            )
+        print(f"Using author from git config: {args.author}", file=sys.stderr)
 
     # Parse target date
     target_date = parse_date(args.date)

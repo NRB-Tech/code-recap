@@ -317,9 +317,6 @@ def init_config(argv: list[str]) -> int:
     else:
         print("No files created.")
 
-    # Get author name for examples
-    author = _get_git_author() or "Your Name"
-
     # Next steps
     print("\n" + "=" * 50)
     print("Next steps:")
@@ -331,35 +328,17 @@ def init_config(argv: list[str]) -> int:
 source keys/all.sh
 """)
 
-    print(f"""# Generate a year-in-review summary
-code-recap summarize 2025 --author "{author}" --html --open
+    print("""# Generate a year-in-review summary
+code-recap summarize 2025 --html --open
 
 # Quick daily summary for time logging
-code-recap daily --author "{author}"
+code-recap daily
 
 # Statistics only (no LLM, no API key needed)
-code-recap stats 2025 --author "{author}" --format markdown
+code-recap stats 2025 --format markdown
 """)
     print("Documentation: https://github.com/NRB-Tech/code-recap")
     return 0
-
-
-def _get_git_author() -> Optional[str]:
-    """Gets the git user name from config."""
-    import subprocess
-
-    try:
-        result = subprocess.run(
-            ["git", "config", "user.name"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        if result.returncode == 0:
-            return result.stdout.strip()
-    except Exception:
-        pass
-    return None
 
 
 def print_help() -> None:
@@ -382,10 +361,10 @@ Commands:
   init                 Create a template config.yaml file
 
 Quick start:
-  code-recap summarize 2025 --author "Your Name"
-  code-recap summarize 2025 --author "Your Name" --html
-  code-recap daily --author "Your Name"
-  code-recap stats 2025 --author "Your Name" --format markdown
+  code-recap summarize 2025                # Uses git config user.name
+  code-recap summarize 2025 --html
+  code-recap daily
+  code-recap stats 2025 --format markdown
 
 Options:
   -h, --help           Show this help message
@@ -393,11 +372,11 @@ Options:
   help <command>       Show help for a specific command
 
 Examples:
-  code-recap summarize 2025 --author "Your Name"           # Year summary
-  code-recap summarize 2025-Q3 --author "Your Name"        # Quarter
-  code-recap summarize 2025-06 --author "Your Name" --html # Month + HTML
-  code-recap daily --author "Your Name" --date yesterday   # Daily summary
-  code-recap stats 2020:2025 --author "Your Name" --granularity year
+  code-recap summarize 2025                               # Year summary
+  code-recap summarize 2025-Q3                            # Quarter
+  code-recap summarize 2025-06 --html                     # Month + HTML
+  code-recap daily --date yesterday                       # Daily summary
+  code-recap stats 2020:2025 --granularity year
 
 Environment variables:
   OPENAI_API_KEY       For GPT models (default: gpt-4o-mini)
