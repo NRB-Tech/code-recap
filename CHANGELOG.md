@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-01-06
+
 ### Added
 - Shared `add_input_dir_arg()` and `add_output_dir_arg()` functions in `arguments.py` for consistent CLI arguments
 - `CHANGELOG.md` for tracking version history
@@ -90,7 +92,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dark/light theme toggle
 - Company override per client for subcontracted work
 
-[Unreleased]: https://github.com/nrbrook/code-recap/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/nrbrook/code-recap/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/nrbrook/code-recap/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/nrbrook/code-recap/compare/v1.0.4...v1.1.0
 [1.0.4]: https://github.com/nrbrook/code-recap/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/nrbrook/code-recap/compare/v1.0.2...v1.0.3

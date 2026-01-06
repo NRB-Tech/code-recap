@@ -1,6 +1,6 @@
 [project]
 name = "code-recap"
-version = "1.1.0"
+version = "1.1.1"
 description = "Git activity analysis and LLM-powered summary tools for developers and consultants"
 readme = "README.md"
 license = "MIT"
