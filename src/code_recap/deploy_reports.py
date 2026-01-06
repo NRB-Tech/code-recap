@@ -48,6 +48,7 @@ DEFAULT_CONFIG = {
 class ClientDeployConfig:
     """Per-client deployment configuration."""
 
+    s3_url: Optional[str] = None  # Custom URL for S3-hosted reports (e.g., CloudFront domain)
     cloudflare_project_name: Optional[str] = None  # Override project name
     cloudflare_access_emails: list[str] = field(default_factory=list)  # Emails with access
 
@@ -113,6 +114,9 @@ class DeployConfig:
                 if isinstance(client_data, dict) and "deploy" in client_data:
                     deploy_data = client_data["deploy"]
                     client_config = ClientDeployConfig()
+                    if "s3" in deploy_data:
+                        s3_data = deploy_data["s3"]
+                        client_config.s3_url = s3_data.get("url")
                     if "cloudflare" in deploy_data:
                         cf_data = deploy_data["cloudflare"]
                         client_config.cloudflare_project_name = cf_data.get("project_name")
@@ -243,9 +247,9 @@ class S3Provider(DeployProvider):
 
     def _get_url(self, client_slug: str) -> str:
         """Builds the public URL for the deployed site."""
-        # Check for custom domain in per-client config
+        # Check for custom URL in per-client config (e.g., CloudFront domain)
         client_config = self.config.get_client_config(client_slug)
-        if hasattr(client_config, "s3_url") and client_config.s3_url:
+        if client_config.s3_url:
             return client_config.s3_url
 
         # Default S3 website URL format

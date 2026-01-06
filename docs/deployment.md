@@ -110,6 +110,21 @@ For better performance and custom domains:
 2. Configure your custom domain
 3. Use Origin Access Control (OAC) to keep the bucket private
 
+### Per-Client Custom URLs
+
+Configure custom URLs (e.g., CloudFront domains) per client:
+
+```yaml
+html_report:
+  clients:
+    "Acme Corp":
+      deploy:
+        s3:
+          url: "https://reports.acme.example/acme_corp/index.html"
+```
+
+This URL is displayed after deployment instead of the default S3 URL.
+
 ---
 
 ## Cloudflare Pages Provider

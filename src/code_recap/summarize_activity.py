@@ -429,10 +429,9 @@ RECOMMENDED_MODELS = {
         ("gpt-5.2", "Latest flagship model"),
     ],
     "anthropic": [
-        ("anthropic/claude-4-haiku", "Cheapest Claude, fast"),
-        ("anthropic/claude-4-sonnet", "Balanced performance"),
-        ("anthropic/claude-4.5-sonnet", "Latest Sonnet"),
-        ("anthropic/claude-4.5-opus", "Most capable Claude"),
+        ("claude-haiku-4-5", "Cheapest Claude, fast"),
+        ("claude-sonnet-4-5", "Balanced performance"),
+        ("claude-opus-4-5", "Most capable Claude"),
     ],
     "gemini": [
         ("gemini/gemini-2.0-flash-lite", "Cheapest Gemini"),

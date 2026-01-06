@@ -127,6 +127,11 @@ html_report:
       accent_secondary: "#F57C00"  # Darker orange
       logo: ""
       icon: "🚀"
+      # Per-client deployment overrides
+      deploy:
+        s3:
+          # Custom URL for this client (e.g., CloudFront distribution)
+          url: "https://reports.beta-inc.example/beta_inc/index.html"
       # Example: If Beta Inc is a client of Acme Corp (subcontracted work),
       # you can override the company shown in the header:
       # company_override:
