@@ -128,6 +128,20 @@ def add_output_dir_arg(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def add_input_dir_arg(parser: argparse.ArgumentParser, help_text: Optional[str] = None) -> None:
+    """Adds the --input-dir argument to a parser.
+
+    Args:
+        parser: The argument parser to add the argument to.
+        help_text: Custom help text (default: generic input directory help).
+    """
+    parser.add_argument(
+        "--input-dir",
+        default=None,
+        help=help_text or "Input directory.",
+    )
+
+
 def add_exclude_args(parser: argparse.ArgumentParser, detailed_help: bool = False) -> None:
     """Adds exclusion pattern arguments to a parser.
 

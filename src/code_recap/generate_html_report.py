@@ -14,6 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from code_recap.arguments import add_input_dir_arg
 from code_recap.paths import get_config_path, get_output_dir
 
 # Default configuration (generic - customize in config/config.yaml)
@@ -3059,18 +3060,13 @@ Configuration:
   branding and client-specific colors/logos.
         """,
     )
-    parser.add_argument(
-        "--input-dir",
-        type=Path,
-        default=None,
-        dest="input",
-        help="Input directory containing client markdown folders (default: output/)",
+    add_input_dir_arg(
+        parser, help_text="Input directory containing client markdown folders (default: output/)"
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
         default=None,
-        dest="output",
         help="Output directory for HTML files (default: output/html/)",
     )
     parser.add_argument(
@@ -3108,18 +3104,18 @@ Configuration:
     # --output-dir alone: use as both input base and output base (convenience shorthand)
     # --input-dir alone: read from input, write to default output location
     # Both: use as specified
-    if args.output and not args.input:
+    if args.output_dir and not args.input_dir:
         # Shorthand: --output-dir alone means use it as input and put HTML in html/ subdir
-        input_dir = args.output
+        input_dir = args.output_dir
         if args.client:
-            output_dir = args.output / "html" / args.client
+            output_dir = args.output_dir / "html" / args.client
         else:
-            output_dir = args.output / "html"
+            output_dir = args.output_dir / "html"
     else:
         # Normal case: input defaults to base_output, output defaults to base_output/html
-        input_dir = args.input or base_output
-        if args.output:
-            output_dir = args.output
+        input_dir = args.input_dir or base_output
+        if args.output_dir:
+            output_dir = args.output_dir
         elif args.client:
             output_dir = base_output / "html" / args.client
         else:

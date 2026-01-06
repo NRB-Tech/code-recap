@@ -25,6 +25,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from code_recap.arguments import add_input_dir_arg
 from code_recap.paths import get_config_path, get_output_dir
 
 # Default configuration
@@ -661,12 +662,7 @@ Available providers:
         choices=list(PROVIDERS.keys()),
         help="Deployment provider to use",
     )
-    parser.add_argument(
-        "--input",
-        "-i",
-        default=None,
-        help="Input HTML directory (default: derived from output dir)",
-    )
+    add_input_dir_arg(parser, help_text="Input HTML directory (default: derived from output dir)")
     parser.add_argument(
         "--config",
         default=None,
@@ -703,7 +699,7 @@ Available providers:
         print(f"Config: {config_path}", file=sys.stderr)
 
     # Find client directories
-    html_dir = Path(args.input) if args.input else get_output_dir(subdir="html")
+    html_dir = Path(args.input_dir) if args.input_dir else get_output_dir(subdir="html")
     client_dirs = find_client_dirs(html_dir, args.client if not args.all else None)
 
     if not client_dirs:
