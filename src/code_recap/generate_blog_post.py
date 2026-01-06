@@ -34,7 +34,7 @@ from code_recap.git_utils import (
 )
 
 # Default model
-from code_recap.paths import get_config_path
+from code_recap.paths import get_config_path, get_default_scan_root
 from code_recap.summarize_activity import (
     RECOMMENDED_MODELS,
     CostTracker,
@@ -737,8 +737,8 @@ def add_research_args(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--root",
-        default=os.path.dirname(os.getcwd()),
-        help="Root directory containing repositories.",
+        default=str(get_default_scan_root()),
+        help="Root directory containing repositories (default: current directory).",
     )
     parser.add_argument(
         "--filter",

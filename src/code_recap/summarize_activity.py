@@ -42,7 +42,12 @@ from code_recap.git_utils import (
     get_commit_messages,
     get_commits_with_diffs,
 )
-from code_recap.paths import get_config_path, get_default_output_dir_name, get_output_dir
+from code_recap.paths import (
+    get_config_path,
+    get_default_output_dir_name,
+    get_default_scan_root,
+    get_output_dir,
+)
 
 # Default model (cheapest option)
 DEFAULT_MODEL = "gpt-4o-mini"
@@ -1194,11 +1199,8 @@ Environment variables for API keys:
     )
     parser.add_argument(
         "--root",
-        default=os.path.dirname(os.getcwd()),
-        help=(
-            "Root directory containing project folders (default: parent "
-            "of current working directory)."
-        ),
+        default=str(get_default_scan_root()),
+        help="Root directory containing project folders (default: current directory).",
     )
     parser.add_argument(
         "--granularity",

@@ -157,3 +157,30 @@ def get_default_output_dir_name() -> str:
         return "./code-recap-<period>/"
     else:
         return "output/"
+
+
+def get_default_scan_root() -> Path:
+    """Gets the default root directory for scanning repositories.
+
+    When installed as a package (via pip/uv):
+        Default: current working directory (scans cwd for repos)
+
+    When running from source (development):
+        Default: parent of cwd (scans sibling directories)
+
+    Returns:
+        Path to the default scan root directory.
+    """
+    if _is_installed_package():
+        return Path.cwd()
+    else:
+        return Path.cwd().parent
+
+
+def is_installed_package() -> bool:
+    """Public wrapper for checking if running as installed package.
+
+    Returns:
+        True if installed via pip/uv, False if running from source.
+    """
+    return _is_installed_package()

@@ -15,6 +15,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Callable, Optional
 
+from code_recap.paths import get_default_scan_root
+
 
 def run_git(repo_path: str, args: Sequence[str]) -> tuple[int, str, str]:
     """Runs a git command in the provided repository path.
@@ -868,8 +870,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     archive_parser.add_argument(
         "--root",
-        default=os.path.dirname(os.getcwd()),
-        help="Root directory containing repositories (default: parent of cwd).",
+        default=str(get_default_scan_root()),
+        help="Root directory containing repositories (default: current directory).",
     )
     archive_parser.add_argument(
         "--days",
@@ -905,8 +907,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     list_parser.add_argument(
         "--root",
-        default=os.path.dirname(os.getcwd()),
-        help="Root directory containing repositories (default: parent of cwd).",
+        default=str(get_default_scan_root()),
+        help="Root directory containing repositories (default: current directory).",
     )
     list_parser.add_argument(
         "--archive-dir",
@@ -925,8 +927,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     unarchive_parser.add_argument(
         "--root",
-        default=os.path.dirname(os.getcwd()),
-        help="Root directory containing repositories (default: parent of cwd).",
+        default=str(get_default_scan_root()),
+        help="Root directory containing repositories (default: current directory).",
     )
     unarchive_parser.add_argument(
         "--archive-dir",
@@ -951,8 +953,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     fetch_parser.add_argument(
         "--root",
-        default=os.path.dirname(os.getcwd()),
-        help="Root directory containing repositories (default: parent of cwd).",
+        default=str(get_default_scan_root()),
+        help="Root directory containing repositories (default: current directory).",
     )
     fetch_parser.add_argument(
         "--no-submodules",

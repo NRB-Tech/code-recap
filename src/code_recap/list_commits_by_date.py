@@ -13,7 +13,7 @@ from code_recap.git_utils import (
     discover_top_level_repos,
     run_git,
 )
-from code_recap.paths import get_default_output_dir_name, get_output_dir
+from code_recap.paths import get_default_output_dir_name, get_default_scan_root, get_output_dir
 
 
 @dataclass
@@ -337,11 +337,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     parser.add_argument(
         "--root",
-        default=os.path.dirname(os.getcwd()),
-        help=(
-            "Root directory containing project folders (default: parent "
-            "of current working directory)."
-        ),
+        default=str(get_default_scan_root()),
+        help="Root directory containing project folders (default: current directory).",
     )
     parser.add_argument(
         "--include-remotes",

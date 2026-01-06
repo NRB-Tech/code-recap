@@ -24,6 +24,7 @@ from code_recap.git_utils import (
     get_commits_with_diffs,
     run_git,
 )
+from code_recap.paths import get_default_scan_root
 
 # Default model
 DEFAULT_MODEL = "gpt-4o-mini"
@@ -448,11 +449,8 @@ Models (LiteLLM format):
     )
     parser.add_argument(
         "--root",
-        default=os.path.dirname(os.getcwd()),
-        help=(
-            "Root directory containing project folders "
-            "(default: parent of current working directory)."
-        ),
+        default=str(get_default_scan_root()),
+        help="Root directory containing project folders (default: current directory).",
     )
     parser.add_argument(
         "--filter",

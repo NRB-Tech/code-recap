@@ -23,7 +23,12 @@ from code_recap.git_utils import (
     fetch_repos_with_progress,
     run_git,
 )
-from code_recap.paths import get_config_path, get_default_output_dir_name, get_output_dir
+from code_recap.paths import (
+    get_config_path,
+    get_default_output_dir_name,
+    get_default_scan_root,
+    get_output_dir,
+)
 
 # Extension to language name mapping
 EXTENSION_LANGUAGE_MAP: dict[str, str] = {
@@ -1425,11 +1430,8 @@ Examples:
     )
     parser.add_argument(
         "--root",
-        default=os.path.dirname(os.getcwd()),
-        help=(
-            "Root directory containing project folders (default: parent "
-            "of current working directory)."
-        ),
+        default=str(get_default_scan_root()),
+        help="Root directory containing project folders (default: current directory).",
     )
     parser.add_argument(
         "--filter",
