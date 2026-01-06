@@ -743,8 +743,7 @@ def cmd_research(args: argparse.Namespace) -> int:
     Returns:
         Exit code (0 for success).
     """
-    if not resolve_author(args):
-        return 1
+    resolve_author(args)
 
     # Read topic from stdin if '-'
     if args.topic == "-":
@@ -925,8 +924,7 @@ def cmd_full(args: argparse.Namespace) -> int:
     Returns:
         Exit code (0 for success).
     """
-    if not resolve_author(args):
-        return 1
+    resolve_author(args)
 
     # Read topic from stdin if '-'
     if args.topic == "-":
