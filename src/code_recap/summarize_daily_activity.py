@@ -206,6 +206,7 @@ def call_llm(
     system_prompt: str,
     user_prompt: str,
     cost_tracker: CostTracker,
+    temperature: float = 0.3,
 ) -> str:
     """Calls the LLM via LiteLLM and tracks costs.
 
@@ -214,6 +215,7 @@ def call_llm(
         system_prompt: System prompt to set context.
         user_prompt: User prompt with the actual request.
         cost_tracker: CostTracker instance to update.
+        temperature: LLM temperature (default: 0.3).
 
     Returns:
         The LLM's response text.
@@ -232,7 +234,7 @@ def call_llm(
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
-        temperature=0.3,
+        temperature=temperature,
     )
 
     # Extract cost information from response
@@ -326,6 +328,7 @@ def format_output_with_llm(
     model: str,
     include_diffs: bool,
     cost_tracker: CostTracker,
+    temperature: float = 0.3,
 ) -> str:
     """Formats activity output with LLM-generated summaries.
 
@@ -335,6 +338,7 @@ def format_output_with_llm(
         model: LLM model to use.
         include_diffs: Whether to include diffs in LLM prompts.
         cost_tracker: CostTracker instance to update.
+        temperature: LLM temperature (default: 0.3).
 
     Returns:
         Formatted string with LLM summaries per project.
@@ -353,7 +357,9 @@ def format_output_with_llm(
         )
 
         prompt = format_project_prompt(activity, include_diffs)
-        summary = call_llm(model, DAILY_SUMMARY_SYSTEM_PROMPT, prompt, cost_tracker)
+        summary = call_llm(
+            model, DAILY_SUMMARY_SYSTEM_PROMPT, prompt, cost_tracker, temperature
+        )
 
         lines.append(f"## {activity.project_name}")
         lines.append("")
@@ -530,7 +536,12 @@ Models (LiteLLM format):
         cost_tracker = CostTracker()
         include_diffs = not args.no_diffs
         output = format_output_with_llm(
-            activities, target_date, args.model, include_diffs, cost_tracker
+            activities,
+            target_date,
+            args.model,
+            include_diffs,
+            cost_tracker,
+            args.temperature,
         )
         print(f"Done. Total cost: ${cost_tracker.total_cost:.4f}", file=sys.stderr)
 
