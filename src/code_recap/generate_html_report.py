@@ -3060,8 +3060,6 @@ Configuration:
         """,
     )
     parser.add_argument(
-        "-i",
-        "--input",
         "--input-dir",
         type=Path,
         default=None,
@@ -3069,8 +3067,6 @@ Configuration:
         help="Input directory containing client markdown folders (default: output/)",
     )
     parser.add_argument(
-        "-o",
-        "--output",
         "--output-dir",
         type=Path,
         default=None,
