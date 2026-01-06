@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CSS variables `--surface` and `--border` replaced with `--bg-card` and `--border-color` (were undefined)
 - Deploy `--input-dir` now checks for `html/` subdirectory automatically
 - Directory arguments now properly typed as `Path` objects
+- `bump-version.sh` now uses proper newlines on macOS (BSD sed compatibility)
 
 ## [1.1.0] - 2026-01-06
 

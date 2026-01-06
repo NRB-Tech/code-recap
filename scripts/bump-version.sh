@@ -111,10 +111,11 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 
     # Update CHANGELOG.md: rename [Unreleased] to new version with date
     TODAY=$(date +%Y-%m-%d)
-    sed -i '' "s/## \[Unreleased\]/## [Unreleased]\n\n## [$NEW_VERSION] - $TODAY/" CHANGELOG.md
+    # BSD sed doesn't interpret \n, so use literal newlines via $'' quoting
+    sed -i '' $'s/## \\[Unreleased\\]/## [Unreleased]\\\n\\\n## ['"$NEW_VERSION"$'] - '"$TODAY"$'/' CHANGELOG.md
     
     # Add new comparison link and update Unreleased link
-    sed -i '' "s|\[Unreleased\]: \(.*\)/compare/v.*\.\.\.HEAD|\[Unreleased\]: \1/compare/v$NEW_VERSION...HEAD\n[$NEW_VERSION]: \1/compare/v$CURRENT_VERSION...v$NEW_VERSION|" CHANGELOG.md
+    sed -i '' $'s|\\[Unreleased\\]: \\(.*\\)/compare/v.*\\.\\.\\.HEAD|[Unreleased]: \\1/compare/v'"$NEW_VERSION"$'...HEAD\\\n['"$NEW_VERSION"$']: \\1/compare/v'"$CURRENT_VERSION"$'...v'"$NEW_VERSION"$'|' CHANGELOG.md
     echo "✓ Updated CHANGELOG.md"
 
     git add pyproject.toml src/code_recap/__init__.py uv.lock CHANGELOG.md
