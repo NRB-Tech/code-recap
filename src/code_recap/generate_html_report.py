@@ -3105,24 +3105,22 @@ Configuration:
     config_path_resolved = get_config_path(str(args.config) if args.config else None)
 
     # Determine input and output directories
-    if args.input:
-        input_dir = args.input
-        if args.output:
-            output_dir = args.output
-        elif args.client:
-            output_dir = args.input / "html" / args.client
-        else:
-            output_dir = args.input / "html"
-    elif args.output:
-        # If only output dir provided, use it as input and put HTML in html/ subdir
+    # --output-dir alone: use as both input base and output base (convenience shorthand)
+    # --input-dir alone: read from input, write to default output location
+    # Both: use as specified
+    if args.output and not args.input:
+        # Shorthand: --output-dir alone means use it as input and put HTML in html/ subdir
         input_dir = args.output
         if args.client:
             output_dir = args.output / "html" / args.client
         else:
             output_dir = args.output / "html"
     else:
-        input_dir = base_output
-        if args.client:
+        # Normal case: input defaults to base_output, output defaults to base_output/html
+        input_dir = args.input or base_output
+        if args.output:
+            output_dir = args.output
+        elif args.client:
             output_dir = base_output / "html" / args.client
         else:
             output_dir = base_output / "html"
