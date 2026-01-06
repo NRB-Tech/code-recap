@@ -3106,15 +3106,30 @@ Configuration:
 
     # Use get_output_dir to get input dir (markdown summaries), and derive HTML output from it
     base_output = get_output_dir(output_dir=None)
-    input_dir = args.input or base_output
     config_path_resolved = get_config_path(str(args.config) if args.config else None)
 
-    if args.output:
-        output_dir = args.output
-    elif args.client:
-        output_dir = base_output / "html" / args.client
+    # Determine input and output directories
+    if args.input:
+        input_dir = args.input
+        if args.output:
+            output_dir = args.output
+        elif args.client:
+            output_dir = args.input / "html" / args.client
+        else:
+            output_dir = args.input / "html"
+    elif args.output:
+        # If only output dir provided, use it as input and put HTML in html/ subdir
+        input_dir = args.output
+        if args.client:
+            output_dir = args.output / "html" / args.client
+        else:
+            output_dir = args.output / "html"
     else:
-        output_dir = base_output / "html"
+        input_dir = base_output
+        if args.client:
+            output_dir = base_output / "html" / args.client
+        else:
+            output_dir = base_output / "html"
 
     if not input_dir.exists():
         print(f"Error: Input directory does not exist: {input_dir}", file=sys.stderr)
