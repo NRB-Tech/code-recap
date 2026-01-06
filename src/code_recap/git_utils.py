@@ -52,6 +52,7 @@ def get_git_config_author() -> Optional[str]:
             ["git", "config", "--get", "user.name"],
             capture_output=True,
             text=True,
+            timeout=5,
         )
         if result.returncode == 0 and result.stdout.strip():
             return result.stdout.strip()
