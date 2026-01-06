@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Pre-commit hooks for ruff linting and formatting
+- **S3 deployment provider** — Deploy HTML reports to AWS S3 buckets. Requires AWS CLI.
+- **Plugin system for deployment providers** — Create custom providers in separate packages without modifying Code Recap source. Use the `code_recap.deploy_providers` entry point group.
+- Documentation split into separate files under `docs/`:
+  - `docs/configuration.md` — Configuration reference
+  - `docs/commands.md` — Command reference
+  - `docs/deployment.md` — Deployment guide
+  - `docs/extending.md` — Guide for implementing custom deployment providers
 
 ## [1.1.1] - 2026-01-06
 

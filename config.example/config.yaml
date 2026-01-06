@@ -151,6 +151,14 @@ deploy:
     zip:
       output_dir: "output/zips"    # Where to save zip files
 
+    # S3 provider - deploy to AWS S3 (requires AWS CLI)
+    # Install AWS CLI: pip install awscli
+    # Configure credentials: aws configure
+    s3:
+      bucket: ""                   # S3 bucket name (or use S3_BUCKET env var)
+      region: "us-east-1"          # AWS region (or use AWS_REGION env var)
+      prefix: ""                   # Optional path prefix within bucket
+
     # Cloudflare Pages - deploy to Cloudflare (requires wrangler CLI)
     # Install wrangler: npm install -g wrangler
     # Login: wrangler login

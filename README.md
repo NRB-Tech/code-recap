@@ -32,6 +32,36 @@ See what generated reports look like:
 
 ---
 
+## Quick Start
+
+```bash
+# Initialize (creates config, prompts for API keys, shows next steps)
+uvx code-recap init
+
+# Or set API key manually
+export OPENAI_API_KEY='sk-...'
+
+# Generate your year-in-review
+cd ~/Documents/Repos
+uvx code-recap summarize 2025 --open
+# → Output: ./code-recap-2025/
+```
+
+That's it! Your reports open automatically in the browser.
+
+### Installation Options
+
+```bash
+# Run directly (no install)
+uvx code-recap summarize 2025
+
+# Or install globally
+uv tool install code-recap    # then use: code-recap summarize ...
+pip install code-recap        # then use: code-recap summarize ...
+```
+
+---
+
 ## Use Cases
 
 ### Year-end report with HTML
@@ -66,7 +96,7 @@ code-recap stats 2020:2025 --granularity year --format csv
 Run `code-recap` from a directory containing git repositories:
 
 ```
-~/Documents/Repos/           # Run code-recap here (or use --root to specify a different directory)
+~/Documents/Repos/           # Run code-recap here (or use --root <path>)
 ├── project-a/               # Git repository (scanned)
 ├── project-b/               # Git repository (scanned)
 ├── side-project/            # Git repository (scanned)
@@ -78,336 +108,58 @@ Run `code-recap` from a directory containing git repositories:
 
 **No configuration needed for basic use.** Just run the command and get a unified report.
 
-### Configuration (Optional)
-
-Create a `config.yaml` to customize behavior. Run `code-recap init` or see the [example config](config.example/config.yaml).
-
-**Client Grouping** — Organize reports by client with directory pattern matching:
-```yaml
-clients:
-  "Acme Corp":
-    directories: ["acme-*"]    # Glob patterns for repo names
-```
-
-**Exclusion Patterns** — Skip files from line count statistics (build artifacts, generated code).
-
-**API Keys** — Store LLM API keys in config.yaml (or use environment variables).
-
-**HTML Styling** — Customize report branding, colors, and company logo.
-
-**Public Summary Privacy** — Control which clients appear in public summaries (anonymize, suppress, or show full names).
-
-See [Configuration](#configuration) for full details.
-
----
-
-## Quick Start
+For multi-client workflows, create a config file:
 
 ```bash
-# Initialize (creates config, prompts for API keys, shows next steps)
-uvx code-recap init
-
-# Or set API key manually
-export OPENAI_API_KEY='sk-...'
-
-# Generate your year-in-review
-cd ~/Documents/Repos
-uvx code-recap summarize 2025 --open
-# → Output: ./code-recap-2025/
+code-recap init              # Creates config.yaml + API key setup
 ```
 
-That's it! Your reports open automatically in the browser.
-
-### Installation Options
-
-```bash
-# Run directly (no install)
-uvx code-recap summarize 2025
-
-# Or install globally
-uv tool install code-recap    # then use: code-recap summarize ...
-pip install code-recap        # then use: code-recap summarize ...
-```
-
-### Configuration (Optional)
-
-For multi-client workflows:
-
-```bash
-code-recap init              # Creates config.yaml + API key files
-# Edit config.yaml to define your clients
-```
-
-Or copy the [full example](config.example/config.yaml) with all options documented.
+See the [Configuration Guide](docs/configuration.md) for full details.
 
 ---
 
 ## Recommended Models
 
-Code Recap uses [LiteLLM](https://docs.litellm.ai/) to support multiple LLM providers. Choose based on your needs:
+Code Recap uses [LiteLLM](https://docs.litellm.ai/) to support multiple LLM providers:
 
 | Model | Command | Best For | Cost |
 |-------|---------|----------|------|
 | **GPT-4o-mini** | `--model gpt-4o-mini` | Default choice, reliable and fast | ~$0.15/year |
 | **Gemini 2.0 Flash** | `--model gemini/gemini-2.0-flash` | Large codebases (1M context), very fast | ~$0.05/year |
-| **Claude Haiku** | `--model anthropic/claude-3-5-haiku-latest` | Best writing quality for summaries | ~$0.30/year |
+| **Gemini 3.0 Flash Preview** | `--model gemini/gemini-3-flash-preview` | Latest Gemini model, very fast | ~$0.50/year |
+| **Claude Haiku** | `--model anthropic/claude-4-5-haiku-latest` | Best writing quality for summaries | ~$0.30/year |
 
 *Costs shown are approximate for summarizing 1 year of typical developer activity (~3000 commits).*
 
 ```bash
-# Examples
-code-recap summarize 2025                                            # Uses default (GPT-4o-mini)
-code-recap summarize 2025 --model gemini/gemini-2.0-flash
-code-recap summarize --list-models                                   # See all available models
+code-recap summarize 2025 --list-models    # See all available models
 ```
 
 ---
 
-## Command Reference
+## Commands
 
-All functionality is accessed through the `code-recap` command with subcommands:
+| Command | Description |
+|---------|-------------|
+| `summarize` | LLM-powered activity summaries (main command) |
+| `daily` | Daily activity for time logging |
+| `stats` | Statistics without LLM (text/markdown/CSV) |
+| `html` | Convert markdown to HTML reports |
+| `blog` | Generate blog posts from commits |
+| `deploy` | Deploy HTML reports to providers |
+| `git` | Repository utilities (fetch, archive) |
 
-```
-code-recap <command> [options]
-
-Commands:
-  summarize, report    LLM-powered activity summaries (main command)
-  daily, today         Daily activity for time logging
-  stats, activity      Statistics without LLM (text/markdown/CSV)
-  html                 Convert markdown to HTML reports
-  blog                 Generate blog posts from commits
-  commits              List commits for a date
-  deploy               Deploy HTML reports
-  git, repos           Repository utilities (fetch, archive)
-```
-
-### `code-recap summarize` — LLM-Powered Summaries
-
-Generates narrative summaries of git activity using hierarchical LLM summarization.
-
-```bash
-code-recap summarize 2025                               # All clients
-code-recap summarize 2025 --client "Acme"               # Specific client
-code-recap summarize 2025 --author "@company.com"       # Match by email domain
-code-recap summarize 2025 --open                        # Open HTML in browser
-code-recap summarize 2025 --dry-run                     # Preview (no API cost)
-```
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--granularity` | Period breakdown (week/month/quarter/year) | `month` |
-| `--model` | LLM model (see Recommended Models above) | `gpt-4o-mini` |
-| `--client` | Filter to specific client | All clients |
-| `--max-cost` | Budget limit in USD | `1.00` |
-| `--summaries-only` | Regenerate internal/public summaries from existing markdown | `false` |
-| `--no-html` | Skip HTML report generation | `false` |
-| `--open` | Open HTML in browser | `false` |
-| `--dry-run` | Preview without API calls | `false` |
+See the [Command Reference](docs/commands.md) for detailed options.
 
 ---
 
-### `code-recap daily` — Daily Time Logging
+## Documentation
 
-Generates concise summaries for a specific date—perfect for time tracking and billing.
-
-```bash
-code-recap daily                           # Today
-code-recap daily --date yesterday
-code-recap daily --date -2                 # 2 days ago
-code-recap daily --no-llm                  # Just list commits
-```
-
----
-
-### `code-recap stats` — Statistics & CSV Export
-
-Generates detailed statistics with support for text, markdown, and CSV output.
-
-```bash
-code-recap stats 2025
-code-recap stats 2020:2025 --granularity year --format csv
-code-recap stats 2025-Q3 --format markdown
-```
-
-**Output includes:** commit counts, line changes, per-language breakdown, per-project stats, active days, and coding streaks.
-
----
-
-### `code-recap blog` — AI Blog Post Generator
-
-Two-stage pipeline: research commits first, then generate a polished blog post.
-
-```bash
-# Full pipeline
-code-recap blog full "Building a Real-Time LED Controller" --period 2025-09
-
-# Or step by step (allows editing research before writing)
-code-recap blog research "My Topic" --period 2025-Q3
-code-recap blog write output/blog/my-topic/research.md
-```
-
----
-
-### `code-recap html` — Branded HTML Reports
-
-Converts markdown summaries to styled HTML reports with your company branding.
-
-```bash
-code-recap html                       # Generate all HTML reports
-code-recap html --client "Acme"       # Just one client
-```
-
----
-
-### `code-recap commits` — Daily Commit Log
-
-Lists all commits for a specific date across all repositories.
-
-```bash
-code-recap commits 2025-01-03
-code-recap commits $(date +%Y-%m-%d)  # Today
-```
-
----
-
-### `code-recap git` — Repository Management
-
-Utilities for managing multiple repositories.
-
-```bash
-code-recap git fetch                      # Fetch all repos in parallel
-code-recap git archive --days 365         # Archive inactive repos (dry run)
-code-recap git archive --days 365 --execute
-code-recap git unarchive my-project --execute
-```
-
----
-
-## Configuration
-
-Configuration is **optional**. For basic use, just run the scripts—no config needed.
-
-For customization, create a template config:
-
-```bash
-code-recap init    # Creates config.yaml with commented examples
-```
-
-Or copy the [full example](config.example/config.yaml) with all options documented.
-
-### Client Configuration (`config.yaml`) — Optional
-
-If you're a consultant working with multiple clients, configure project-to-client mapping:
-
-```yaml
-clients:
-  "Acme Corp":
-    directories:
-      - "acme-*"      # Matches acme-firmware, acme-ios, etc.
-    exclude:
-      - "*-legacy"    # Except acme-legacy (goes to Other)
-  
-  "Beta Inc":
-    directories:
-      - "beta-*"      # Matches beta-api, beta-frontend
-  
-  Personal:
-    directories:
-      - "dotfiles"    # Exact match
-      - "my-*"        # Glob pattern
-
-# Optional: assign unmatched projects to a default client
-# default_client: Personal
-```
-
-**Matching rules:**
-- `directories`: Glob patterns for repo directory names (supports `*`, `?`, `[seq]`)
-- `exclude`: Patterns to exclude (takes precedence over `directories`)
-- Use `*keyword*` for substring matching
-- Matching is case-insensitive
-- First match wins (order matters in YAML)
-- Unmatched projects go to "Other"
-
-### Exclusion Patterns (`excludes.yaml`)
-
-Configure files/directories to exclude from line count statistics:
-
-```yaml
-# Global exclusions (apply to all projects)
-global:
-  - "*.hex"
-  - "*/build/*"
-  - "package-lock.json"
-
-# Project-specific exclusions
-projects:
-  MyProject:
-    - "vendor/*"
-  AnotherProject:
-    - "generated/*"
-```
-
-### API Keys
-
-API keys can be configured in `config.yaml` (recommended) or via environment variables.
-
-**Option 1: Config file** (recommended)
-
-```yaml
-# In config.yaml
-api_keys:
-  openai: "sk-..."
-  gemini: "AI..."
-  anthropic: "sk-ant-..."
-```
-
-Run `code-recap init` to set up keys interactively.
-
-**Option 2: Environment variables**
-
-Environment variables take precedence over config file values:
-
-```bash
-export OPENAI_API_KEY='sk-...'
-export GEMINI_API_KEY='...'
-export ANTHROPIC_API_KEY='sk-ant-...'
-```
-
-Get keys from:
-- [OpenAI](https://platform.openai.com/api-keys)
-- [Google Gemini](https://aistudio.google.com/apikey)
-- [Anthropic](https://console.anthropic.com/settings/keys)
-
-### Public Summary Privacy
-
-Control how client information appears in public-facing summaries (blog posts, annual reports):
-
-```yaml
-public_summary:
-  # Default: "anonymize" | "full" | "suppress"
-  default_disclosure: "anonymize"
-
-  # Per-client overrides
-  clients:
-    "Open Source Project":
-      disclosure: "full"           # Show actual name
-    "Acme Corp":
-      disclosure: "anonymize"
-      description: "a consumer electronics company"
-    "Secret Client":
-      disclosure: "suppress"       # Exclude entirely
-```
-
-**Disclosure levels:**
-- `full` — Use actual client name in public content
-- `anonymize` — Replace with description (default)
-- `suppress` — Exclude from public summary entirely
-
-To regenerate public summaries after changing disclosure settings without reprocessing all clients:
-
-```bash
-code-recap summarize 2025 --summaries-only
-```
+- **[Configuration Guide](docs/configuration.md)** — Client mapping, API keys, exclusions, HTML styling
+- **[Command Reference](docs/commands.md)** — Detailed options for all CLI commands
+- **[Deployment Guide](docs/deployment.md)** — Deploy and share HTML reports
+- **[Extending Code Recap](docs/extending.md)** — Implement custom deployment providers
+- **[Example Configuration](config.example/config.yaml)** — Full config with all options documented
 
 ---
 
@@ -416,34 +168,24 @@ code-recap summarize 2025 --summaries-only
 ### Using uv (Recommended)
 
 ```bash
-cd ~/Documents/Repos/code-recap
-
 # Install as a tool
-uv tool install .
+uv tool install code-recap
 
-# Or run directly
-uv run code-recap summarize 2024
-uv run code-recap stats 2024
-uv run code-recap commits 2024-01-15
-uv run code-recap git fetch
+# Or run directly without installing
+uvx code-recap summarize 2025
 ```
 
 ### Using pip
 
 ```bash
-cd ~/Documents/Repos/code-recap
-
-# Install in development mode
-pip install -e .
-
-# Then run
-code-recap summarize 2024
+pip install code-recap
 ```
 
 ### Development
 
 ```bash
-# Install with dev dependencies (includes ruff)
+git clone https://github.com/nrb-tech/code-recap.git
+cd code-recap
 uv sync --dev
 
 # Run linting
@@ -451,30 +193,10 @@ uv run ruff check .
 uv run ruff format .
 ```
 
-### Dependencies
+### Requirements
 
 - **Python 3.9+**
 - **Git** (command line)
-- **litellm** (for `summarize_activity.py` and `generate_blog_post.py`)
-- **pyyaml** (for configuration parsing)
-- **ruff** (dev only, for linting)
-
----
-
-## Common Options
-
-Most scripts share these options:
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--root` | Root directory containing repos | Parent of cwd |
-| `--author` | Filter commits by author | git config user.name |
-| `--client` | Client name for organizing outputs | (none) |
-| `--output-dir` | Base output directory | `output/` |
-| `-o, --output` | Explicit output file path | Auto-generated |
-| `--stdout` | Write to stdout instead of file | `false` |
-| `--filter` | Filter repos by name pattern | All repos |
-| `--fetch` | Fetch repos from remotes before processing | `false` |
 
 ---
 

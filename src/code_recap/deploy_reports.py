@@ -57,6 +57,9 @@ class DeployConfig:
     """Configuration for deployment."""
 
     zip_output_dir: str = "output/zips"
+    s3_bucket: str = ""
+    s3_region: str = "us-east-1"
+    s3_prefix: str = ""  # Optional path prefix within bucket
     cloudflare_project_prefix: str = "reports"
     cloudflare_account_id: str = ""
     cloudflare_api_token: str = ""  # For Access API
@@ -90,6 +93,11 @@ class DeployConfig:
             providers = data["deploy"]["providers"]
             if "zip" in providers:
                 config.zip_output_dir = providers["zip"].get("output_dir", config.zip_output_dir)
+            if "s3" in providers:
+                s3 = providers["s3"]
+                config.s3_bucket = s3.get("bucket", config.s3_bucket)
+                config.s3_region = s3.get("region", config.s3_region)
+                config.s3_prefix = s3.get("prefix", config.s3_prefix)
             if "cloudflare" in providers:
                 cf = providers["cloudflare"]
                 config.cloudflare_project_prefix = cf.get(
@@ -194,6 +202,103 @@ class ZipProvider(DeployProvider):
                 provider=self.name,
                 client=client_name,
                 message=f"Failed to create zip: {e}",
+            )
+
+
+class S3Provider(DeployProvider):
+    """Deploys reports to an AWS S3 bucket.
+
+    Requires the AWS CLI to be installed and configured with appropriate credentials.
+    The bucket should be configured for static website hosting if you want public access.
+    """
+
+    def __init__(self, config: DeployConfig):
+        """Initialize with deployment configuration.
+
+        Args:
+            config: DeployConfig instance with provider settings.
+        """
+        self.config = config
+        self.bucket = config.s3_bucket or os.environ.get("S3_BUCKET", "")
+        self.region = config.s3_region or os.environ.get("AWS_REGION", "us-east-1")
+        self.prefix = config.s3_prefix  # Optional path prefix within bucket
+
+    @property
+    def name(self) -> str:
+        return "s3"
+
+    def _check_aws_cli(self) -> bool:
+        """Checks if AWS CLI is available."""
+        try:
+            subprocess.run(["aws", "--version"], capture_output=True, check=True)
+            return True
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return False
+
+    def _get_s3_path(self, client_slug: str) -> str:
+        """Builds the S3 destination path."""
+        if self.prefix:
+            return f"s3://{self.bucket}/{self.prefix}/{client_slug}/"
+        return f"s3://{self.bucket}/{client_slug}/"
+
+    def _get_url(self, client_slug: str) -> str:
+        """Builds the public URL for the deployed site."""
+        # Check for custom domain in per-client config
+        client_config = self.config.get_client_config(client_slug)
+        if hasattr(client_config, "s3_url") and client_config.s3_url:
+            return client_config.s3_url
+
+        # Default S3 website URL format
+        path = f"{self.prefix}/{client_slug}" if self.prefix else client_slug
+        return f"https://{self.bucket}.s3.{self.region}.amazonaws.com/{path}/index.html"
+
+    def deploy(self, source_dir: Path, client_name: str, client_slug: str) -> DeployResult:
+        """Syncs HTML files to S3."""
+        if not self._check_aws_cli():
+            return DeployResult(
+                success=False,
+                provider=self.name,
+                client=client_name,
+                message="AWS CLI not found. Install with: pip install awscli",
+            )
+
+        if not self.bucket:
+            return DeployResult(
+                success=False,
+                provider=self.name,
+                client=client_name,
+                message="S3 bucket not configured. Set S3_BUCKET env var or s3.bucket in config.",
+            )
+
+        s3_path = self._get_s3_path(client_slug)
+
+        try:
+            cmd = [
+                "aws",
+                "s3",
+                "sync",
+                str(source_dir),
+                s3_path,
+                "--delete",
+                "--region",
+                self.region,
+            ]
+            print(f"  Running: {' '.join(cmd)}")
+            subprocess.run(cmd, check=True)
+
+            return DeployResult(
+                success=True,
+                provider=self.name,
+                client=client_name,
+                message=f"Deployed to S3: {s3_path}",
+                url=self._get_url(client_slug),
+            )
+        except subprocess.CalledProcessError as e:
+            return DeployResult(
+                success=False,
+                provider=self.name,
+                client=client_name,
+                message=f"S3 sync failed (exit code {e.returncode})",
             )
 
 
@@ -527,11 +632,76 @@ class CloudflareProvider(DeployProvider):
             )
 
 
-# Registry of available providers
-PROVIDERS: dict[str, type[DeployProvider]] = {
+# Built-in providers
+_BUILTIN_PROVIDERS: dict[str, type[DeployProvider]] = {
     "zip": ZipProvider,
+    "s3": S3Provider,
     "cloudflare": CloudflareProvider,
 }
+
+
+def _discover_providers() -> dict[str, type[DeployProvider]]:
+    """Discovers deployment providers from entry points.
+
+    External packages can register providers via the 'code_recap.deploy_providers'
+    entry point group. Each entry point should point to a DeployProvider subclass.
+
+    Example pyproject.toml for an external provider package:
+        [project.entry-points."code_recap.deploy_providers"]
+        s3 = "my_package.providers:S3Provider"
+
+    Returns:
+        Dict mapping provider names to provider classes.
+    """
+    providers = dict(_BUILTIN_PROVIDERS)
+
+    try:
+        # Python 3.10+ has importlib.metadata in stdlib
+        from importlib.metadata import entry_points
+
+        # entry_points() returns a SelectableGroups object in 3.10+
+        # or a dict in 3.9
+        eps = entry_points()
+        if hasattr(eps, "select"):
+            # Python 3.10+
+            discovered = eps.select(group="code_recap.deploy_providers")
+        else:
+            # Python 3.9
+            discovered = eps.get("code_recap.deploy_providers", [])
+
+        for ep in discovered:
+            try:
+                provider_class = ep.load()
+                if not (
+                    isinstance(provider_class, type) and issubclass(provider_class, DeployProvider)
+                ):
+                    print(
+                        f"Warning: Entry point '{ep.name}' is not a DeployProvider subclass",
+                        file=sys.stderr,
+                    )
+                    continue
+                providers[ep.name] = provider_class
+            except Exception as e:
+                print(f"Warning: Failed to load provider '{ep.name}': {e}", file=sys.stderr)
+
+    except ImportError:
+        pass  # importlib.metadata not available
+
+    return providers
+
+
+def get_providers() -> dict[str, type[DeployProvider]]:
+    """Returns all available deployment providers (built-in and plugins).
+
+    Returns:
+        Dict mapping provider names to provider classes.
+    """
+    return _discover_providers()
+
+
+# For backwards compatibility, PROVIDERS is populated at import time
+# Use get_providers() for dynamic discovery including newly installed plugins
+PROVIDERS: dict[str, type[DeployProvider]] = _discover_providers()
 
 
 def load_config(config_path: Path) -> DeployConfig:
@@ -629,6 +799,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     Returns:
         Exit code.
     """
+    # Discover providers dynamically (includes plugins)
+    providers = get_providers()
+
     parser = argparse.ArgumentParser(
         description="Deploy HTML reports to various providers.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -636,11 +809,15 @@ def main(argv: Optional[list[str]] = None) -> int:
 Examples:
   %(prog)s --client acme --provider zip
   %(prog)s --client "Beta Inc" --provider cloudflare
+  %(prog)s --client acme --provider s3
   %(prog)s --all --provider zip
 
-Available providers:
+Built-in providers:
   zip        - Create a zip file for manual sharing
+  s3         - Deploy to AWS S3 (requires AWS CLI)
   cloudflare - Deploy to Cloudflare Pages (requires wrangler CLI)
+
+Custom providers can be installed as plugins. Use --list-providers to see all.
 """,
     )
 
@@ -658,9 +835,7 @@ Available providers:
     parser.add_argument(
         "--provider",
         "-p",
-        required=True,
-        choices=list(PROVIDERS.keys()),
-        help="Deployment provider to use",
+        help="Deployment provider to use (see --list-providers)",
     )
     add_input_dir_arg(parser, help_text="Input HTML directory (default: derived from output dir)")
     parser.add_argument(
@@ -684,9 +859,20 @@ Available providers:
 
     if args.list_providers:
         print("Available providers:")
-        for name in PROVIDERS:
-            print(f"  {name}")
+        for name in providers:
+            suffix = "" if name in _BUILTIN_PROVIDERS else " (plugin)"
+            print(f"  {name}{suffix}")
         return 0
+
+    if not args.provider:
+        parser.error("--provider is required (use --list-providers to see options)")
+
+    # Validate provider name
+    if args.provider not in providers:
+        available = ", ".join(sorted(providers.keys()))
+        print(f"Unknown provider: {args.provider}", file=sys.stderr)
+        print(f"Available providers: {available}", file=sys.stderr)
+        return 1
 
     if not args.client and not args.all:
         parser.error("Either --client or --all is required")
@@ -716,7 +902,7 @@ Available providers:
         return 1
 
     # Create provider
-    provider_class = PROVIDERS[args.provider]
+    provider_class = providers[args.provider]
     provider = provider_class(config)
 
     # Deploy each client
