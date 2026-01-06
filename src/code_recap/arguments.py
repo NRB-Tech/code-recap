@@ -115,16 +115,17 @@ def add_filter_arg(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def add_output_dir_arg(parser: argparse.ArgumentParser) -> None:
+def add_output_dir_arg(parser: argparse.ArgumentParser, help_text: Optional[str] = None) -> None:
     """Adds the --output-dir argument to a parser.
 
     Args:
         parser: The argument parser to add the argument to.
+        help_text: Custom help text (default: generic output directory help).
     """
     parser.add_argument(
         "--output-dir",
         default=None,
-        help=f"Base output directory (default: {get_default_output_dir_name()}).",
+        help=help_text or f"Base output directory (default: {get_default_output_dir_name()}).",
     )
 
 

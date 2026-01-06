@@ -14,7 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from code_recap.arguments import add_input_dir_arg
+from code_recap.arguments import add_input_dir_arg, add_output_dir_arg
 from code_recap.paths import get_config_path, get_output_dir
 
 # Default configuration (generic - customize in config/config.yaml)
@@ -3063,11 +3063,8 @@ Configuration:
     add_input_dir_arg(
         parser, help_text="Input directory containing client markdown folders (default: output/)"
     )
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
-        default=None,
-        help="Output directory for HTML files (default: output/html/)",
+    add_output_dir_arg(
+        parser, help_text="Output directory for HTML files (default: output/html/)"
     )
     parser.add_argument(
         "--config",
