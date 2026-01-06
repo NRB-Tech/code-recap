@@ -283,7 +283,7 @@ code-recap stats 2025 --author "{author}" --format markdown
     return 0
 
 
-def _get_git_author() -> str | None:
+def _get_git_author() -> Optional[str]:
     """Gets the git user name from config."""
     import subprocess
 
