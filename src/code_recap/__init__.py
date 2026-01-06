@@ -4,7 +4,7 @@ Tools for analyzing and summarizing git activity across multiple repositories,
 with LLM-powered summaries and HTML report generation.
 """
 
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 __author__ = "Code Recap Contributors"
 
 from code_recap.paths import get_config_path, get_output_dir
