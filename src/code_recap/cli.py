@@ -305,6 +305,9 @@ def init_config(argv: list[str]) -> int:
                         f.write("\n# API keys\nkeys/\n")
                     print("Added keys/ to .gitignore")
 
+    # Check if key files were created
+    keys_created = any("keys/" in f for f in created_files)
+
     # Summary
     print("\n" + "=" * 50)
     if created_files:
@@ -319,10 +322,16 @@ def init_config(argv: list[str]) -> int:
 
     # Next steps
     print("\n" + "=" * 50)
-    print("Try these commands:")
+    print("Next steps:")
     print("=" * 50)
-    print(f"""
-# Generate a year-in-review summary
+
+    if keys_created:
+        print("""
+# First, load your API keys
+source keys/all.sh
+""")
+
+    print(f"""# Generate a year-in-review summary
 code-recap summarize 2025 --author "{author}" --html --open
 
 # Quick daily summary for time logging
