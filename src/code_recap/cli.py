@@ -142,50 +142,102 @@ def init_config(argv: list[str]) -> int:
         if output_path.exists() and not args.force:
             print(f"Config file {output_path} already exists (use --force to overwrite)")
         else:
-            template = """# Code Recap Configuration
-# See: https://github.com/NRB-Tech/code-recap
+            # Prompt for organization details
+            print("=" * 50)
+            print("Organization Setup (press Enter to skip any)")
+            print("=" * 50)
+            print()
 
-# Global context for LLM summaries (optional)
-# global_context: |
-#   Brief description of your work or company for context in summaries.
+            try:
+                org_name = input("Organization/company name: ").strip()
+                website = input("Website URL (for HTML reports): ").strip()
+                print()
+                print("Describe yourself or your organization (for LLM context).")
+                print("This helps the AI understand your work. Press Enter twice to finish:")
+                description_lines = []
+                while True:
+                    line = input()
+                    if line == "" and description_lines and description_lines[-1] == "":
+                        description_lines.pop()  # Remove trailing empty line
+                        break
+                    description_lines.append(line)
+                description = "\n".join(description_lines).strip()
+            except (KeyboardInterrupt, EOFError):
+                print("\nSkipping organization setup...")
+                org_name = ""
+                website = ""
+                description = ""
 
-# Client configuration (optional - for consultants with multiple clients)
-# clients:
-#   "Client Name":
-#     directories:
-#       - "project-*"      # Glob patterns for repo names
-#       - "another-repo"   # Exact match
-#     exclude:
-#       - "*-archive"      # Exclude patterns
-#     context: |
-#       Brief description of work for this client.
-#
-#   "Another Client":
-#     directories:
-#       - "client2-*"
+            # Build config content
+            config_lines = [
+                "# Code Recap Configuration",
+                "# See: https://github.com/NRB-Tech/code-recap",
+                "",
+            ]
 
-# Assign unmatched repos to a default client (optional)
-# default_client: Personal
+            # Global context
+            if description:
+                config_lines.append("# Context for LLM summaries")
+                config_lines.append("global_context: |")
+                for line in description.split("\n"):
+                    config_lines.append(f"  {line}")
+                config_lines.append("")
+            else:
+                config_lines.extend(
+                    [
+                        "# Global context for LLM summaries (optional)",
+                        "# global_context: |",
+                        "#   Brief description of your work for context in summaries.",
+                        "",
+                    ]
+                )
 
-# File patterns to exclude from statistics (optional)
-# excludes:
-#   global:
-#     - "*.lock"
-#     - "package-lock.json"
-#     - "*/node_modules/*"
-#     - "*/build/*"
-#     - "*.min.js"
-#   projects:
-#     MyProject:
-#       - "vendor/*"
+            # Client configuration (always commented as example)
+            config_lines.extend(
+                [
+                    "# Client configuration (optional - for consultants with multiple clients)",
+                    "# clients:",
+                    '#   "Client Name":',
+                    "#     directories:",
+                    '#       - "project-*"      # Glob patterns for repo names',
+                    "#     context: |",
+                    "#       Brief description of work for this client.",
+                    "",
+                    "# File patterns to exclude from statistics (optional)",
+                    "# excludes:",
+                    "#   global:",
+                    '#     - "*.lock"',
+                    '#     - "package-lock.json"',
+                    '#     - "*/node_modules/*"',
+                    "",
+                ]
+            )
 
-# HTML report branding (optional)
-# html_report:
-#   company_name: "Your Company"
-#   logo_url: "https://example.com/logo.png"
-#   primary_color: "#2563eb"
-"""
-            output_path.write_text(template)
+            # HTML report branding
+            if org_name or website:
+                config_lines.append("# HTML report branding")
+                config_lines.append("html_report:")
+                config_lines.append("  company:")
+                if org_name:
+                    config_lines.append(f'    name: "{org_name}"')
+                if website:
+                    config_lines.append(f'    url: "{website}"')
+                config_lines.append('  # accent_primary: "#2563eb"')
+                config_lines.append("")
+            else:
+                config_lines.extend(
+                    [
+                        "# HTML report branding (optional)",
+                        "# html_report:",
+                        "#   company:",
+                        '#     name: "Your Company"',
+                        '#     url: "https://example.com"',
+                        '#   accent_primary: "#2563eb"',
+                        "",
+                    ]
+                )
+
+            output_path.write_text("\n".join(config_lines))
             created_files.append(str(output_path))
 
     # Set up API keys
