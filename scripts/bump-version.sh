@@ -109,12 +109,26 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
         fi
     fi
 
-    # Update CHANGELOG.md: rename [Unreleased] to new version with date
+    # Update CHANGELOG.md: insert new version after [Unreleased]
+    # Uses awk to properly consume blank lines after [Unreleased] to prevent double-spacing
     TODAY=$(date +%Y-%m-%d)
-    # BSD sed doesn't interpret \n, so use literal newlines via $'' quoting
-    sed -i '' $'s/## \\[Unreleased\\]/## [Unreleased]\\\n\\\n## ['"$NEW_VERSION"$'] - '"$TODAY"$'/' CHANGELOG.md
+    awk -v ver="$NEW_VERSION" -v date="$TODAY" '
+        /^## \[Unreleased\]/ {
+            print
+            print ""
+            print "## [" ver "] - " date
+            # Skip any blank lines that follow [Unreleased]
+            while ((getline next_line) > 0 && next_line ~ /^[[:space:]]*$/) {}
+            # Print blank line then the first non-blank line we found
+            if (next_line !~ /^[[:space:]]*$/) print ""
+            if (next_line !~ /^[[:space:]]*$/) print next_line
+            next
+        }
+        { print }
+    ' CHANGELOG.md > CHANGELOG.md.tmp && mv CHANGELOG.md.tmp CHANGELOG.md
     
     # Add new comparison link and update Unreleased link
+    # BSD sed doesn't interpret \n, so use literal newlines via $'' quoting
     sed -i '' $'s|\\[Unreleased\\]: \\(.*\\)/compare/v.*\\.\\.\\.HEAD|[Unreleased]: \\1/compare/v'"$NEW_VERSION"$'...HEAD\\\n['"$NEW_VERSION"$']: \\1/compare/v'"$CURRENT_VERSION"$'...v'"$NEW_VERSION"$'|' CHANGELOG.md
     echo "✓ Updated CHANGELOG.md"
 
