@@ -80,7 +80,7 @@ fi
 # Show changes
 echo ""
 echo "Changes:"
-git diff --color pyproject.toml src/code_recap/__init__.py uv.lock
+git --no-pager diff --color pyproject.toml src/code_recap/__init__.py uv.lock
 
 echo ""
 read -p "Commit and tag v$NEW_VERSION? [y/N] " -n 1 -r
