@@ -105,3 +105,8 @@ When making changes, test with:
 1. Add to argparse in the relevant script
 2. Document in README under the script's section
 3. Add to help text examples (using generic names)
+
+**Updating the Changelog:**
+- When making notable changes, add an entry to `CHANGELOG.md` under `[Unreleased]`
+- Use categories: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`
+- Write entries from the user's perspective, not implementation details

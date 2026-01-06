@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Shared `add_input_dir_arg()` and `add_output_dir_arg()` functions in `arguments.py` for consistent CLI arguments
+- `CHANGELOG.md` for tracking version history
+- `bump-version.sh` now validates and auto-updates changelog on release
 
 ### Changed
 - HTML command now uses `--input-dir` and `--output-dir` instead of `-i`/`--input` and `-o`/`--output`
