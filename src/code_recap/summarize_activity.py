@@ -19,6 +19,16 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Optional
 
+from code_recap.arguments import (
+    add_author_arg,
+    add_config_arg,
+    add_exclude_args,
+    add_fetch_arg,
+    add_model_args,
+    add_output_dir_arg,
+    add_root_arg,
+    resolve_author,
+)
 from code_recap.git_activity_review import (
     DEFAULT_EXCLUDE_PATTERNS,
     ExcludeConfig,
@@ -41,12 +51,9 @@ from code_recap.git_utils import (
     fetch_repos_with_progress,
     get_commit_messages,
     get_commits_with_diffs,
-    get_git_config_author,
 )
 from code_recap.paths import (
     get_config_path,
-    get_default_output_dir_name,
-    get_default_scan_root,
     get_output_dir,
 )
 
@@ -1211,14 +1218,7 @@ Environment variables for API keys:
             "YYYY-MM (month), YYYY-WNN (week), or START:END for ranges."
         ),
     )
-    parser.add_argument(
-        "--author",
-        help=(
-            "Author name or email pattern to filter commits. "
-            "Defaults to git config user.name. "
-            "Supports partial matching: 'John', 'john@example.com', or '@example.com' for domain."
-        ),
-    )
+    add_author_arg(parser)
     parser.add_argument(
         "--list-models",
         nargs="?",
@@ -1231,38 +1231,22 @@ Environment variables for API keys:
         metavar="NAME",
         help="Override automatic client detection with explicit client name.",
     )
-    parser.add_argument(
-        "--config",
-        metavar="FILE",
-        help="Path to config.yaml file (default: ./config/config.yaml or ~/.config/code-recap/).",
-    )
+    add_config_arg(parser)
     parser.add_argument(
         "--no-client-grouping",
         action="store_true",
         help="Disable client-based grouping (single combined output).",
     )
-    parser.add_argument(
-        "--root",
-        default=str(get_default_scan_root()),
-        help="Root directory containing project folders (default: current directory).",
-    )
+    add_root_arg(parser)
     parser.add_argument(
         "--granularity",
         choices=["year", "quarter", "month", "week"],
         default="month",
         help="Granularity for summarization periods (default: month).",
     )
-    parser.add_argument(
-        "--model",
-        default=DEFAULT_MODEL,
-        help=f"LiteLLM model string (default: {DEFAULT_MODEL}).",
-    )
-    parser.add_argument(
-        "--temperature",
-        type=float,
-        default=0.7,
-        help="LLM temperature (default: 0.7).",
-    )
+    add_model_args(parser, DEFAULT_MODEL)
+    # Override temperature default for summarization
+    parser.set_defaults(temperature=0.7)
     parser.add_argument(
         "--max-cost",
         type=float,
@@ -1302,38 +1286,9 @@ Environment variables for API keys:
         action="store_true",
         help="Write output to stdout instead of files.",
     )
-    parser.add_argument(
-        "--output-dir",
-        default=None,
-        help=f"Base output directory (default: {get_default_output_dir_name()}).",
-    )
-    parser.add_argument(
-        "--fetch",
-        action="store_true",
-        help="Fetch repositories before processing (updates from remotes).",
-    )
-    parser.add_argument(
-        "--exclude",
-        action="append",
-        default=[],
-        metavar="PATTERN",
-        help="Glob pattern for files to exclude from stats.",
-    )
-    parser.add_argument(
-        "--excludes-file",
-        metavar="FILE",
-        help="Path to file containing exclusion patterns.",
-    )
-    parser.add_argument(
-        "--no-excludes-file",
-        action="store_true",
-        help="Do not load patterns from excludes file.",
-    )
-    parser.add_argument(
-        "--no-default-excludes",
-        action="store_true",
-        help="Disable default exclusions.",
-    )
+    add_output_dir_arg(parser)
+    add_fetch_arg(parser)
+    add_exclude_args(parser)
     parser.add_argument(
         "--filter",
         action="append",
@@ -1368,15 +1323,7 @@ Environment variables for API keys:
     if not args.period:
         parser.error("period is required (unless using --list-models)")
 
-    # Use git config author as default if not provided
-    if not args.author:
-        args.author = get_git_config_author()
-        if not args.author:
-            parser.error(
-                "--author is required (git config user.name not set). "
-                "Set it with: git config --global user.name 'Your Name'"
-            )
-        print(f"Using author from git config: {args.author}", file=sys.stderr)
+    resolve_author(args, parser)
 
     root = os.path.abspath(args.root)
 

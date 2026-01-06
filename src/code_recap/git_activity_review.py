@@ -17,17 +17,23 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Optional
 
+from code_recap.arguments import (
+    add_author_arg,
+    add_exclude_args,
+    add_fetch_arg,
+    add_filter_arg,
+    add_output_dir_arg,
+    add_root_arg,
+    resolve_author,
+)
 from code_recap.git_utils import (
     discover_all_submodules,
     discover_top_level_repos,
     fetch_repos_with_progress,
-    get_git_config_author,
     run_git,
 )
 from code_recap.paths import (
     get_config_path,
-    get_default_output_dir_name,
-    get_default_scan_root,
     get_output_dir,
 )
 
@@ -1421,30 +1427,9 @@ Examples:
             "YYYY-MM (month), YYYY-WNN (week), or START:END for ranges."
         ),
     )
-    parser.add_argument(
-        "--author",
-        help=(
-            "Author name or email pattern to filter commits. "
-            "Defaults to git config user.name. "
-            "Supports partial matching: 'John', 'john@example.com', or '@example.com' for domain."
-        ),
-    )
-    parser.add_argument(
-        "--root",
-        default=str(get_default_scan_root()),
-        help="Root directory containing project folders (default: current directory).",
-    )
-    parser.add_argument(
-        "--filter",
-        action="append",
-        default=[],
-        metavar="PATTERN",
-        help=(
-            "Filter repositories by name pattern (can be repeated). "
-            "Supports glob patterns (e.g., 'MyProject*') or substrings. "
-            "Case-insensitive. Examples: --filter 'frontend*' --filter 'api-*'."
-        ),
-    )
+    add_author_arg(parser)
+    add_root_arg(parser)
+    add_filter_arg(parser)
     parser.add_argument(
         "--format",
         choices=["text", "markdown", "csv"],
@@ -1473,48 +1458,9 @@ Examples:
         action="store_true",
         help="Write output to stdout instead of files.",
     )
-    parser.add_argument(
-        "--output-dir",
-        default=None,
-        help=f"Base output directory (default: {get_default_output_dir_name()}).",
-    )
-    parser.add_argument(
-        "--exclude",
-        action="append",
-        default=[],
-        metavar="PATTERN",
-        help=(
-            "Glob pattern for files to exclude from line counts (can be "
-            "repeated). Examples: '*.hex', '*/archive/*', 'package-lock.json'."
-        ),
-    )
-    parser.add_argument(
-        "--excludes-file",
-        metavar="FILE",
-        help=(
-            "Path to file containing exclusion patterns. Default: looks for "
-            "'excludes.txt' in the script directory. Format: one pattern per "
-            "line, use 'PROJECT:pattern' for project-specific excludes."
-        ),
-    )
-    parser.add_argument(
-        "--no-excludes-file",
-        action="store_true",
-        help="Do not load patterns from excludes file.",
-    )
-    parser.add_argument(
-        "--no-default-excludes",
-        action="store_true",
-        help=("Disable default exclusions (build artifacts, lock files, etc.)."),
-    )
-    parser.add_argument(
-        "--fetch",
-        action="store_true",
-        help=(
-            "Fetch repositories before processing (updates from remotes). All "
-            "repos (including submodules) are fetched to ensure latest commits."
-        ),
-    )
+    add_output_dir_arg(parser)
+    add_exclude_args(parser, detailed_help=True)
+    add_fetch_arg(parser, detailed_help=True)
     parser.add_argument(
         "--error-on-fetch-failure",
         action="store_true",
@@ -1526,15 +1472,7 @@ Examples:
 
     args = parser.parse_args(argv)
 
-    # Use git config author as default if not provided
-    if not args.author:
-        args.author = get_git_config_author()
-        if not args.author:
-            parser.error(
-                "--author is required (git config user.name not set). "
-                "Set it with: git config --global user.name 'Your Name'"
-            )
-        print(f"Using author from git config: {args.author}", file=sys.stderr)
+    resolve_author(args, parser)
 
     root = os.path.abspath(args.root)
 

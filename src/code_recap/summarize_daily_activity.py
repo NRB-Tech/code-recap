@@ -17,15 +17,20 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Optional
 
+from code_recap.arguments import (
+    add_author_arg,
+    add_filter_arg,
+    add_model_args,
+    add_root_arg,
+    resolve_author,
+)
 from code_recap.git_utils import (
     CommitInfo,
     discover_all_submodules,
     discover_top_level_repos,
     get_commits_with_diffs,
-    get_git_config_author,
     run_git,
 )
-from code_recap.paths import get_default_scan_root
 
 # Default model
 DEFAULT_MODEL = "gpt-4o-mini"
@@ -440,34 +445,10 @@ Models (LiteLLM format):
             "or '-N' for N days ago (default: today)."
         ),
     )
-    parser.add_argument(
-        "--author",
-        help=(
-            "Author name or email pattern to filter commits. "
-            "Defaults to git config user.name. "
-            "Supports partial matching: 'John', 'john@example.com', or '@example.com' for domain."
-        ),
-    )
-    parser.add_argument(
-        "--root",
-        default=str(get_default_scan_root()),
-        help="Root directory containing project folders (default: current directory).",
-    )
-    parser.add_argument(
-        "--filter",
-        action="append",
-        default=[],
-        metavar="PATTERN",
-        help=(
-            "Filter repositories by name pattern (can be repeated). "
-            "Supports glob patterns or substrings. Case-insensitive."
-        ),
-    )
-    parser.add_argument(
-        "--model",
-        default=DEFAULT_MODEL,
-        help=f"LLM model to use (default: {DEFAULT_MODEL}).",
-    )
+    add_author_arg(parser)
+    add_root_arg(parser)
+    add_filter_arg(parser)
+    add_model_args(parser, DEFAULT_MODEL)
     parser.add_argument(
         "--no-llm",
         action="store_true",
@@ -488,15 +469,7 @@ Models (LiteLLM format):
 
     args = parser.parse_args(argv)
 
-    # Use git config author as default if not provided
-    if not args.author:
-        args.author = get_git_config_author()
-        if not args.author:
-            parser.error(
-                "--author is required (git config user.name not set). "
-                "Set it with: git config --global user.name 'Your Name'"
-            )
-        print(f"Using author from git config: {args.author}", file=sys.stderr)
+    resolve_author(args, parser)
 
     # Parse target date
     target_date = parse_date(args.date)

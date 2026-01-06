@@ -20,6 +20,15 @@ import sys
 from dataclasses import dataclass
 from typing import Optional
 
+from code_recap.arguments import (
+    add_author_arg,
+    add_config_arg,
+    add_fetch_arg,
+    add_filter_arg,
+    add_model_args,
+    add_root_arg,
+    resolve_author,
+)
 from code_recap.git_activity_review import (
     date_range_to_git_args,
     parse_period,
@@ -30,12 +39,9 @@ from code_recap.git_utils import (
     discover_top_level_repos,
     fetch_repos_with_progress,
     get_commits_with_diffs,
-    get_git_config_author,
     run_git,
 )
-
-# Default model
-from code_recap.paths import get_config_path, get_default_scan_root
+from code_recap.paths import get_config_path
 from code_recap.summarize_activity import (
     RECOMMENDED_MODELS,
     CostTracker,
@@ -669,17 +675,9 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
     Args:
         parser: The argument parser to add arguments to.
     """
-    parser.add_argument(
-        "--model",
-        default=DEFAULT_MODEL,
-        help=f"LiteLLM model string (default: {DEFAULT_MODEL}).",
-    )
-    parser.add_argument(
-        "--temperature",
-        type=float,
-        default=0.7,
-        help="LLM temperature (default: 0.7).",
-    )
+    add_model_args(parser, DEFAULT_MODEL)
+    # Override temperature default for blog posts
+    parser.set_defaults(temperature=0.7)
     parser.add_argument(
         "--max-cost",
         type=float,
@@ -701,11 +699,7 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="Write output to stdout instead of file.",
     )
-    parser.add_argument(
-        "--config",
-        metavar="FILE",
-        help="Path to config.yaml file (default: ./config/config.yaml or ~/.config/code-recap/).",
-    )
+    add_config_arg(parser)
 
 
 def add_research_args(parser: argparse.ArgumentParser) -> None:
@@ -723,42 +717,21 @@ def add_research_args(parser: argparse.ArgumentParser) -> None:
         required=True,
         help="Time period to analyze (YYYY, YYYY-QN, YYYY-MM, YYYY-WNN).",
     )
-    parser.add_argument(
-        "--author",
-        help=(
-            "Author name or email pattern to filter commits. "
-            "Defaults to git config user.name. "
-            "Supports partial matching: 'John', 'john@example.com', or '@example.com' for domain."
-        ),
-    )
+    add_author_arg(parser)
     parser.add_argument(
         "--client",
         metavar="NAME",
         help="Filter repositories by client name.",
     )
-    parser.add_argument(
-        "--root",
-        default=str(get_default_scan_root()),
-        help="Root directory containing repositories (default: current directory).",
-    )
-    parser.add_argument(
-        "--filter",
-        action="append",
-        default=[],
-        metavar="PATTERN",
-        help="Filter repositories by name pattern.",
-    )
+    add_root_arg(parser)
+    add_filter_arg(parser)
     parser.add_argument(
         "--max-diff-lines",
         type=int,
         default=500,
         help="Maximum diff lines per commit (default: 500).",
     )
-    parser.add_argument(
-        "--fetch",
-        action="store_true",
-        help="Fetch repositories before processing (updates from remotes).",
-    )
+    add_fetch_arg(parser)
 
 
 def cmd_research(args: argparse.Namespace) -> int:
@@ -770,17 +743,8 @@ def cmd_research(args: argparse.Namespace) -> int:
     Returns:
         Exit code (0 for success).
     """
-    # Use git config author as default if not provided
-    if not args.author:
-        args.author = get_git_config_author()
-        if not args.author:
-            print(
-                "Error: --author is required (git config user.name not set). "
-                "Set it with: git config --global user.name 'Your Name'",
-                file=sys.stderr,
-            )
-            return 1
-        print(f"Using author from git config: {args.author}", file=sys.stderr)
+    if not resolve_author(args):
+        return 1
 
     # Read topic from stdin if '-'
     if args.topic == "-":
@@ -961,17 +925,8 @@ def cmd_full(args: argparse.Namespace) -> int:
     Returns:
         Exit code (0 for success).
     """
-    # Use git config author as default if not provided
-    if not args.author:
-        args.author = get_git_config_author()
-        if not args.author:
-            print(
-                "Error: --author is required (git config user.name not set). "
-                "Set it with: git config --global user.name 'Your Name'",
-                file=sys.stderr,
-            )
-            return 1
-        print(f"Using author from git config: {args.author}", file=sys.stderr)
+    if not resolve_author(args):
+        return 1
 
     # Read topic from stdin if '-'
     if args.topic == "-":

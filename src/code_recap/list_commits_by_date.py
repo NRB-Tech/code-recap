@@ -8,13 +8,13 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Optional
 
+from code_recap.arguments import add_author_arg, add_root_arg, resolve_author
 from code_recap.git_utils import (
     discover_all_submodules,
     discover_top_level_repos,
-    get_git_config_author,
     run_git,
 )
-from code_recap.paths import get_default_output_dir_name, get_default_scan_root, get_output_dir
+from code_recap.paths import get_default_output_dir_name, get_output_dir
 
 
 @dataclass
@@ -336,11 +336,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         "date",
         help="Date to query in YYYY-MM-DD format (local time).",
     )
-    parser.add_argument(
-        "--root",
-        default=str(get_default_scan_root()),
-        help="Root directory containing project folders (default: current directory).",
-    )
+    add_root_arg(parser)
     parser.add_argument(
         "--include-remotes",
         action="store_true",
@@ -351,14 +347,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         action="store_true",
         help=("Show projects with no commits on the given date."),
     )
-    parser.add_argument(
-        "--author",
-        help=(
-            "Author name or email pattern to filter commits. "
-            "Defaults to git config user.name. "
-            "Supports partial matching: 'John', 'john@example.com', or '@example.com' for domain."
-        ),
-    )
+    add_author_arg(parser)
     parser.add_argument(
         "--remove-duplicates",
         action="store_true",
@@ -388,11 +377,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     args = parser.parse_args(argv)
 
-    # Use git config author as default if not provided
-    if not args.author:
-        args.author = get_git_config_author()
-        if args.author:
-            print(f"Using author from git config: {args.author}")
+    resolve_author(args, required=False, output=sys.stdout)
 
     root = os.path.abspath(args.root)
     since_str, until_str = parse_date_to_range(args.date)
