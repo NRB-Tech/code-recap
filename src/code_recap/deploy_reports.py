@@ -699,7 +699,13 @@ Available providers:
         print(f"Config: {config_path}", file=sys.stderr)
 
     # Find client directories
-    html_dir = Path(args.input_dir) if args.input_dir else get_output_dir(subdir="html")
+    # If input_dir is provided, check if it has an html/ subdirectory
+    if args.input_dir:
+        input_path = Path(args.input_dir)
+        html_subdir = input_path / "html"
+        html_dir = html_subdir if html_subdir.exists() else input_path
+    else:
+        html_dir = get_output_dir(subdir="html")
     client_dirs = find_client_dirs(html_dir, args.client if not args.all else None)
 
     if not client_dirs:
