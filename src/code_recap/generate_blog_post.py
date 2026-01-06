@@ -759,7 +759,7 @@ def cmd_research(args: argparse.Namespace) -> int:
     # Load config and API keys
     config_file = get_config_path(args.config)
     load_api_keys_from_config(config_file)
-    client_config, _ = load_config(str(config_file))
+    client_config, _, _, _ = load_config(str(config_file))
 
     global_context = ""
     client_context = ""
@@ -871,7 +871,7 @@ def cmd_write(args: argparse.Namespace) -> int:
     # Load config and API keys
     config_file = get_config_path(args.config)
     load_api_keys_from_config(config_file)
-    client_config, _ = load_config(str(config_file))
+    client_config, _, _, _ = load_config(str(config_file))
 
     # Try to get context from metadata
     with open(research_path) as f:
@@ -942,7 +942,7 @@ def cmd_full(args: argparse.Namespace) -> int:
     # Load config and API keys
     config_file = get_config_path(args.config)
     load_api_keys_from_config(config_file)
-    client_config, _ = load_config(str(config_file))
+    client_config, _, _, _ = load_config(str(config_file))
 
     global_context = ""
     client_context = ""

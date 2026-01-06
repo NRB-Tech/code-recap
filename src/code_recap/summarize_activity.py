@@ -16,7 +16,7 @@ import os
 import re
 import sys
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 from code_recap.arguments import (
@@ -75,6 +75,80 @@ class PromptConfig:
     period_summary: Optional[str] = None
     final_summary: Optional[str] = None
     internal_summary: Optional[str] = None
+
+
+# Valid disclosure levels for public summaries
+DISCLOSURE_LEVELS = {"full", "anonymize", "suppress"}
+DEFAULT_DISCLOSURE = "anonymize"
+
+
+@dataclass
+class ClientDisclosure:
+    """Disclosure rules for a client in public summaries.
+
+    Attributes:
+        disclosure: How to handle client in public content ("full", "anonymize", "suppress").
+        description: How to refer to client when anonymized (e.g., "a music tech company").
+    """
+
+    disclosure: str = DEFAULT_DISCLOSURE
+    description: str = ""
+
+
+@dataclass
+class PublicSummaryConfig:
+    """Configuration for public-facing summary generation.
+
+    Attributes:
+        default_disclosure: Default disclosure level for all clients.
+        client_disclosures: Per-client disclosure overrides.
+        enabled: Whether to generate public summaries at all.
+    """
+
+    default_disclosure: str = DEFAULT_DISCLOSURE
+    client_disclosures: dict[str, ClientDisclosure] = field(default_factory=dict)
+    enabled: bool = True
+
+    def get_disclosure(self, client_name: str) -> ClientDisclosure:
+        """Gets the disclosure rules for a client.
+
+        Args:
+            client_name: Name of the client.
+
+        Returns:
+            ClientDisclosure with the applicable rules.
+        """
+        if client_name in self.client_disclosures:
+            return self.client_disclosures[client_name]
+        return ClientDisclosure(disclosure=self.default_disclosure)
+
+    def format_client_info_for_prompt(self, client_results: dict[str, str]) -> str:
+        """Formats client information for the public summary prompt.
+
+        Args:
+            client_results: Dict of client name to their summary content.
+
+        Returns:
+            Formatted string with disclosure-aware client information.
+        """
+        lines = []
+        for client_name, summary in client_results.items():
+            disclosure = self.get_disclosure(client_name)
+
+            if disclosure.disclosure == "suppress":
+                continue
+            elif disclosure.disclosure == "full":
+                lines.append(f"## {client_name}")
+                lines.append(summary)
+                lines.append("")
+            else:  # anonymize
+                anon_name = disclosure.description or f"Client ({client_name[:1]}...)"
+                lines.append(f"## {anon_name}")
+                lines.append(f"[Anonymize references to '{client_name}' as '{anon_name}']")
+                lines.append(summary)
+                lines.append("")
+
+        return "\n".join(lines)
 
 
 # Valid audience levels for client summaries
@@ -204,17 +278,23 @@ class ClientConfig:
 
 def load_config(
     config_path: str,
-) -> tuple[Optional[ClientConfig], Optional[ExcludeConfig], Optional[PromptConfig]]:
+) -> tuple[
+    Optional[ClientConfig],
+    Optional[ExcludeConfig],
+    Optional[PromptConfig],
+    Optional[PublicSummaryConfig],
+]:
     """Loads unified configuration from YAML file.
 
     Args:
         config_path: Path to the config.yaml file.
 
     Returns:
-        Tuple of (ClientConfig, ExcludeConfig, PromptConfig), any may be None if not present.
+        Tuple of (ClientConfig, ExcludeConfig, PromptConfig, PublicSummaryConfig),
+        any may be None if not present.
     """
     if not os.path.isfile(config_path):
-        return None, None, None
+        return None, None, None, None
 
     try:
         import yaml  # pyright: ignore[reportMissingModuleSource]
@@ -223,18 +303,18 @@ def load_config(
             "Warning: PyYAML not installed. Install with: pip install pyyaml",
             file=sys.stderr,
         )
-        return None, None, None
+        return None, None, None, None
 
     try:
         with open(config_path) as f:
             data = yaml.safe_load(f)
 
         if not data:
-            return None, None, None
+            return None, None, None, None
 
         # Load client configuration
         client_config: Optional[ClientConfig] = None
-        if "clients" in data:
+        if "clients" in data and data["clients"]:
             clients: dict[str, ClientMatcher] = {}
             for client_name, client_data in data["clients"].items():
                 directories: list[str] = []
@@ -271,20 +351,20 @@ def load_config(
 
         # Load exclude configuration
         exclude_config: Optional[ExcludeConfig] = None
-        if "excludes" in data:
+        if "excludes" in data and data["excludes"]:
             excludes_data = data["excludes"]
             exclude_config = ExcludeConfig()
 
-            if "global" in excludes_data:
+            if "global" in excludes_data and excludes_data["global"]:
                 exclude_config.global_patterns.extend(excludes_data["global"])
 
-            if "projects" in excludes_data:
+            if "projects" in excludes_data and excludes_data["projects"]:
                 for project, patterns in excludes_data["projects"].items():
                     exclude_config.project_patterns[project] = patterns
 
         # Load prompt overrides
         prompt_config: Optional[PromptConfig] = None
-        if "prompts" in data:
+        if "prompts" in data and data["prompts"]:
             prompts_data = data["prompts"]
             prompt_config = PromptConfig(
                 period_summary=prompts_data.get("period_summary"),
@@ -292,11 +372,52 @@ def load_config(
                 internal_summary=prompts_data.get("internal_summary"),
             )
 
-        return client_config, exclude_config, prompt_config
+        # Load public summary configuration
+        public_config: Optional[PublicSummaryConfig] = None
+        if "public_summary" in data and data["public_summary"]:
+            ps_data = data["public_summary"]
+            default_disclosure = ps_data.get("default_disclosure", DEFAULT_DISCLOSURE)
+            if default_disclosure not in DISCLOSURE_LEVELS:
+                print(
+                    f"Warning: Unknown disclosure level '{default_disclosure}', "
+                    f"using '{DEFAULT_DISCLOSURE}'. Valid: {', '.join(DISCLOSURE_LEVELS)}",
+                    file=sys.stderr,
+                )
+                default_disclosure = DEFAULT_DISCLOSURE
+
+            client_disclosures: dict[str, ClientDisclosure] = {}
+            if "clients" in ps_data and ps_data["clients"]:
+                for client_name, cd_data in ps_data["clients"].items():
+                    if isinstance(cd_data, dict):
+                        disclosure = cd_data.get("disclosure", default_disclosure)
+                        if disclosure not in DISCLOSURE_LEVELS:
+                            print(
+                                f"Warning: Unknown disclosure '{disclosure}' for '{client_name}', "
+                                f"using '{default_disclosure}'",
+                                file=sys.stderr,
+                            )
+                            disclosure = default_disclosure
+                        description = cd_data.get("description", "") or ""
+                        client_disclosures[client_name] = ClientDisclosure(
+                            disclosure=disclosure, description=description
+                        )
+                    elif isinstance(cd_data, str):
+                        # Simple format: just the disclosure level
+                        if cd_data in DISCLOSURE_LEVELS:
+                            client_disclosures[client_name] = ClientDisclosure(disclosure=cd_data)
+
+            enabled = ps_data.get("enabled", True)
+            public_config = PublicSummaryConfig(
+                default_disclosure=default_disclosure,
+                client_disclosures=client_disclosures,
+                enabled=enabled,
+            )
+
+        return client_config, exclude_config, prompt_config, public_config
 
     except Exception as e:
         print(f"Warning: Failed to load config: {e}", file=sys.stderr)
-        return None, None, None
+        return None, None, None, None
 
 
 # Recommended models by provider (for --list-models)
@@ -796,6 +917,27 @@ class CostTracker:
             f"Output tokens: {format_number(self.total_output_tokens)}, "
             f"Total cost: ${self.total_cost:.4f}"
         )
+
+
+def print_separator(width: int = 60) -> None:
+    """Prints a separator line.
+
+    Args:
+        width: Width of the separator line in characters.
+    """
+    print("=" * width, file=sys.stderr)
+
+
+def print_heading(title: str, width: int = 60) -> None:
+    """Prints a section heading with separator lines.
+
+    Args:
+        title: The heading text to display.
+        width: Width of the separator lines in characters.
+    """
+    print_separator(width)
+    print(title, file=sys.stderr)
+    print_separator(width)
 
 
 def call_llm(
@@ -1298,6 +1440,14 @@ Environment variables for API keys:
         help="Filter repositories by name pattern.",
     )
     parser.add_argument(
+        "--summaries-only",
+        action="store_true",
+        help=(
+            "Only regenerate internal/public summaries from existing client markdown files. "
+            "Skips LLM processing of individual periods - useful for changing disclosure settings."
+        ),
+    )
+    parser.add_argument(
         "--no-html",
         action="store_true",
         help="Skip HTML report generation (HTML is generated by default).",
@@ -1333,7 +1483,9 @@ Environment variables for API keys:
     # Load API keys from config (if not already in environment)
     load_api_keys_from_config(config_file)
 
-    file_client_config, file_exclude_config, file_prompt_config = load_config(str(config_file))
+    file_client_config, file_exclude_config, file_prompt_config, file_public_config = load_config(
+        str(config_file)
+    )
     if file_client_config or file_exclude_config or file_prompt_config:
         print(f"Loaded config from: {config_file}", file=sys.stderr)
 
@@ -1462,17 +1614,74 @@ Environment variables for API keys:
     # Collect all client results for internal summary
     all_client_results: list[tuple[str, PeriodStats, str]] = []
 
-    # Process each client
+    # Handle --summaries-only mode: read existing markdown instead of processing
+    if args.summaries_only:
+        print("Summaries-only mode: reading existing client markdown files...", file=sys.stderr)
+        base_output_dir = get_output_dir(
+            output_dir=args.output_dir,
+            period=args.period.split(":")[0] if ":" in args.period else args.period,
+        )
+
+        for client_name in repos_by_client:
+            if client_name is None:
+                client_slug = None
+                summary_path = base_output_dir / f"summary-{args.period.replace(':', '-to-')}.md"
+            else:
+                import re as re_module
+
+                client_slug = re_module.sub(r"[^\w\-]", "_", client_name.lower())
+                summary_path = base_output_dir / client_slug / f"summary-{args.period.replace(':', '-to-')}.md"
+
+            if summary_path.exists():
+                content = summary_path.read_text()
+                # Create placeholder stats from file (parse if possible, or use zeros)
+                stats = PeriodStats(
+                    period_label=args.period,
+                    start_date=_dt.date.min,
+                    end_date=_dt.date.max,
+                )
+                # Try to extract stats from content
+                # Format: **Stats:** 1003 commits, +177,557/-94,958 lines, 3582 files, 143 active days
+                import re as re_module
+
+                stats_match = re_module.search(
+                    r"\*\*Stats:\*\*\s*([\d,]+)\s*commits?,\s*\+?([\d,]+)\s*/\s*-?([\d,]+)\s*lines?,\s*([\d,]+)\s*files?,\s*([\d,]+)\s*active",
+                    content,
+                )
+                if stats_match:
+                    stats.commits = int(stats_match.group(1).replace(",", ""))
+                    stats.lines_added = int(stats_match.group(2).replace(",", ""))
+                    stats.lines_removed = int(stats_match.group(3).replace(",", ""))
+                    stats.files_changed = int(stats_match.group(4).replace(",", ""))
+                    stats.active_days = int(stats_match.group(5).replace(",", ""))
+
+                display_name = client_name if client_name else "All Projects"
+                print(f"  Loaded: {display_name} ({summary_path})", file=sys.stderr)
+                all_client_results.append((display_name, stats, content))
+            else:
+                display_name = client_name if client_name else "All Projects"
+                print(f"  Warning: Not found: {summary_path}", file=sys.stderr)
+
+        if not all_client_results:
+            print("Error: No existing summaries found. Run without --summaries-only first.", file=sys.stderr)
+            return 1
+
+        # Skip to internal/public summary generation (handled below)
+    else:
+        # Normal processing mode
+        pass
+
+    # Process each client (skipped in summaries-only mode)
     for client_name, repos in repos_by_client.items():
+        if args.summaries_only:
+            break  # Skip processing in summaries-only mode
         if not repos:
             continue
 
         # Determine if this is internal mode (no clients configured)
         is_internal_mode = client_name is None
         client_display = client_name if client_name else "All Projects"
-        print(f"{'=' * 60}", file=sys.stderr)
-        print(f"Processing: {client_display} ({len(repos)} repos)", file=sys.stderr)
-        print(f"{'=' * 60}", file=sys.stderr)
+        print_heading(f"Processing: {client_display} ({len(repos)} repos)")
 
         # Get context and audience for this client
         global_context = ""
@@ -1680,15 +1889,13 @@ Environment variables for API keys:
 
     # Print total cost summary
     if len(repos_by_client) > 1:
-        print(f"{'=' * 60}", file=sys.stderr)
+        print_separator()
         print(f"Total cost: {total_cost_tracker.summary()}", file=sys.stderr)
 
     # Generate internal company summary if multiple clients
     if len(all_client_results) > 1 and not args.stdout:
         print("", file=sys.stderr)
-        print(f"{'=' * 60}", file=sys.stderr)
-        print("Generating internal company summary...", file=sys.stderr)
-        print(f"{'=' * 60}", file=sys.stderr)
+        print_heading("Generating internal company summary...")
 
         # Format internal summary prompt
         internal_lines = [
@@ -1772,93 +1979,115 @@ Environment variables for API keys:
         print(f"Final cost: {total_cost_tracker.summary()}", file=sys.stderr)
 
     # Generate public-facing summary (for blog posts, annual reports)
-    if all_client_results and not args.stdout:
+    # Check if public summary is enabled
+    public_config = file_public_config or PublicSummaryConfig()
+    if all_client_results and not args.stdout and public_config.enabled:
         print("", file=sys.stderr)
-        print(f"{'=' * 60}", file=sys.stderr)
-        print("Generating public-facing summary...", file=sys.stderr)
-        print(f"{'=' * 60}", file=sys.stderr)
+        print_heading("Generating public-facing summary...")
 
-        # Format public summary prompt (anonymize clients)
-        public_lines = [
-            f"# Activity Summary: {args.period}",
-            "",
-            f"Summarizing work across {len(all_client_results)} projects/clients.",
-            "",
-        ]
+        # Filter results based on disclosure settings
+        included_results = []
+        for client_name, client_stats, client_summary in all_client_results:
+            disclosure = public_config.get_disclosure(client_name)
+            if disclosure.disclosure != "suppress":
+                included_results.append((client_name, client_stats, client_summary, disclosure))
 
-        # Calculate combined stats
-        if not all_client_results:
-            pass
-        elif len(all_client_results) == 1:
-            _, combined_stats, _ = all_client_results[0]
+        if not included_results:
+            print("All clients suppressed from public summary - skipping.", file=sys.stderr)
         else:
-            combined_stats = aggregate_all_period_stats(
-                [(c, s, o) for c, s, o in all_client_results],
-                args.period,
-            )
+            # Format public summary prompt with disclosure-aware client info
+            public_lines = [
+                f"# Activity Summary: {args.period}",
+                "",
+                f"Summarizing work across {len(included_results)} projects/clients.",
+                "",
+            ]
 
-        public_lines.append(f"**Total Stats:** {combined_stats.commits} commits, ")
-        public_lines.append(
-            f"+{format_number(combined_stats.lines_added)}/-{format_number(combined_stats.lines_removed)} lines"
-        )
-        public_lines.append("")
-
-        # Add anonymized client summaries
-        for i, (_client_name, client_stats, client_summary) in enumerate(all_client_results, 1):
-            public_lines.append(f"## Project {i}")
-            public_lines.append(f"({client_stats.commits} commits)")
-            public_lines.append("")
-            public_lines.append(client_summary)
-            public_lines.append("")
-
-        public_prompt = "\n".join(public_lines)
-
-        # Extract year from period for the prompt
-        year = args.period.split("-")[0] if "-" in args.period else args.period
-        public_system_prompt = PUBLIC_SUMMARY_SYSTEM_PROMPT.replace("{year}", year)
-
-        if args.dry_run:
-            print(
-                f"[DRY RUN] Would send {len(public_prompt)} chars for public summary",
-                file=sys.stderr,
-            )
-            public_output = "*(Dry run - public summary would appear here)*"
-        else:
-            try:
-                public_output = call_llm(
-                    args.model,
-                    public_system_prompt,
-                    public_prompt,
-                    args.temperature,
-                    total_cost_tracker,
-                    args.max_cost,
+            # Calculate combined stats (only from included clients)
+            if len(included_results) == 1:
+                _, combined_stats, _, _ = included_results[0]
+            else:
+                combined_stats = aggregate_all_period_stats(
+                    [(c, s, o) for c, s, o, _ in included_results],
+                    args.period,
                 )
-            except SystemExit as e:
-                print(f"Error generating public summary: {e}", file=sys.stderr)
-                public_output = "*(Summary generation failed)*"
 
-        # Save public summary
-        public_dir_path = get_output_dir(
-            output_dir=args.output_dir,
-            period=args.period.split(":")[0] if ":" in args.period else args.period,
-        )
-        public_dir = str(public_dir_path)
-        os.makedirs(public_dir, exist_ok=True)
-        public_path = os.path.join(
-            public_dir, f"public-summary-{args.period.replace(':', '-to-')}.md"
-        )
+            public_lines.append(f"**Total Stats:** {combined_stats.commits} commits, ")
+            public_lines.append(
+                f"+{format_number(combined_stats.lines_added)}/-{format_number(combined_stats.lines_removed)} lines"
+            )
+            public_lines.append("")
 
-        with open(public_path, "w") as f:
-            f.write(public_output)
+            # Add client summaries with disclosure rules
+            for i, (client_name, client_stats, client_summary, disclosure) in enumerate(
+                included_results, 1
+            ):
+                if disclosure.disclosure == "full":
+                    # Show full client name
+                    public_lines.append(f"## {client_name}")
+                    public_lines.append(
+                        f"[Use the actual client name '{client_name}' in the summary]"
+                    )
+                else:
+                    # Anonymize - use description or generic label
+                    anon_label = disclosure.description or f"Project {i}"
+                    public_lines.append(f"## {anon_label}")
+                    public_lines.append(
+                        f"[IMPORTANT: Do NOT mention '{client_name}'. "
+                        f"Refer to this as '{anon_label}' only.]"
+                    )
 
-        print(f"Public summary written to: {public_path}", file=sys.stderr)
+                public_lines.append(f"({client_stats.commits} commits)")
+                public_lines.append("")
+                public_lines.append(client_summary)
+                public_lines.append("")
+
+            public_prompt = "\n".join(public_lines)
+
+            # Extract year from period for the prompt
+            year = args.period.split("-")[0] if "-" in args.period else args.period
+            public_system_prompt = PUBLIC_SUMMARY_SYSTEM_PROMPT.replace("{year}", year)
+
+            if args.dry_run:
+                print(
+                    f"[DRY RUN] Would send {len(public_prompt)} chars for public summary",
+                    file=sys.stderr,
+                )
+                public_output = "*(Dry run - public summary would appear here)*"
+            else:
+                try:
+                    public_output = call_llm(
+                        args.model,
+                        public_system_prompt,
+                        public_prompt,
+                        args.temperature,
+                        total_cost_tracker,
+                        args.max_cost,
+                    )
+                except SystemExit as e:
+                    print(f"Error generating public summary: {e}", file=sys.stderr)
+                    public_output = "*(Summary generation failed)*"
+
+            # Save public summary
+            public_dir_path = get_output_dir(
+                output_dir=args.output_dir,
+                period=args.period.split(":")[0] if ":" in args.period else args.period,
+            )
+            public_dir = str(public_dir_path)
+            os.makedirs(public_dir, exist_ok=True)
+            public_path = os.path.join(
+                public_dir, f"public-summary-{args.period.replace(':', '-to-')}.md"
+            )
+
+            with open(public_path, "w") as f:
+                f.write(public_output)
+
+            print(f"Public summary written to: {public_path}", file=sys.stderr)
 
     # Generate HTML reports by default (unless --no-html)
     if not args.no_html and not args.stdout and not args.dry_run:
         print("", file=sys.stderr)
-        print(f"{'=' * 60}", file=sys.stderr)
-        print("Generating HTML reports...", file=sys.stderr)
-        print(f"{'=' * 60}", file=sys.stderr)
+        print_heading("Generating HTML reports...")
 
         from code_recap.generate_html_report import main as html_main
 

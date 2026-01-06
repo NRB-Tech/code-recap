@@ -190,3 +190,34 @@ deploy:
 #   internal_summary: |
 #     You are creating an internal activity report.
 #     Summarize work done across all clients...
+
+# =============================================================================
+# PUBLIC SUMMARY SETTINGS (Optional)
+# =============================================================================
+# Control how client information appears in public-facing summaries.
+# Public summaries are suitable for blog posts, social media, annual reports.
+
+public_summary:
+  # Default disclosure level: "full", "anonymize", or "suppress"
+  #   full      - Use actual client name in public content
+  #   anonymize - Replace with description (default if none specified)
+  #   suppress  - Exclude from public summary entirely
+  default_disclosure: "anonymize"
+
+  # Per-client disclosure overrides
+  clients:
+    # Example: Show this client's name publicly
+    # "Open Source Project":
+    #   disclosure: "full"
+
+    # Example: Anonymize with a custom description
+    # "Acme Corp":
+    #   disclosure: "anonymize"
+    #   description: "a consumer electronics company"
+
+    # Example: Suppress entirely (confidential client)
+    # "Secret Client":
+    #   disclosure: "suppress"
+
+  # Set to false to disable public summary generation entirely
+  # enabled: true
