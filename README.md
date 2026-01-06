@@ -60,11 +60,11 @@ code-recap stats 2020:2025 --author "Your Name" --granularity year --format csv
 Run `code-recap` from a directory containing git repositories:
 
 ```
-~/Documents/Repos/           # Run code-recap here
+~/Documents/Repos/           # Run code-recap here (or use --root to specify a different directory)
 ├── project-a/               # Git repository (scanned)
 ├── project-b/               # Git repository (scanned)
 ├── side-project/            # Git repository (scanned)
-└── code-recap-2025/         # Generated reports (created)
+└── code-recap-2025/         # Generated report (or use --output-dir to specify a different directory)
     ├── summary-2025.md
     └── html/
         └── index.html
@@ -428,7 +428,7 @@ Most scripts share these options:
 | `-o, --output` | Explicit output file path | Auto-generated |
 | `--stdout` | Write to stdout instead of file | `false` |
 | `--filter` | Filter repos by name pattern | All repos |
-| `--no-fetch` | Skip fetching before processing | Fetch enabled |
+| `--fetch` | Fetch repos from remotes before processing | `false` |
 
 ---
 

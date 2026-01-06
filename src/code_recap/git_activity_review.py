@@ -1507,10 +1507,10 @@ Examples:
         help=("Disable default exclusions (build artifacts, lock files, etc.)."),
     )
     parser.add_argument(
-        "--no-fetch",
+        "--fetch",
         action="store_true",
         help=(
-            "Skip fetching repositories before processing. By default, all "
+            "Fetch repositories before processing (updates from remotes). All "
             "repos (including submodules) are fetched to ensure latest commits."
         ),
     )
@@ -1605,8 +1605,8 @@ Examples:
             file=sys.stderr,
         )
 
-    # Fetch all repos and submodules once at the start (unless --no-fetch)
-    if not args.no_fetch:
+    # Fetch all repos and submodules once at the start (if --fetch)
+    if args.fetch:
         _, fetch_success = fetch_repos_with_progress(
             repos,
             include_submodules=True,

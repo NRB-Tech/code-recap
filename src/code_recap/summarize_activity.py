@@ -1306,9 +1306,9 @@ Environment variables for API keys:
         help=f"Base output directory (default: {get_default_output_dir_name()}).",
     )
     parser.add_argument(
-        "--no-fetch",
+        "--fetch",
         action="store_true",
-        help="Skip fetching repositories before processing.",
+        help="Fetch repositories before processing (updates from remotes).",
     )
     parser.add_argument(
         "--exclude",
@@ -1469,8 +1469,8 @@ Environment variables for API keys:
         # No client grouping - single internal-facing output
         repos_by_client = {None: all_repos}
 
-    # Fetch repos unless --no-fetch
-    if not args.no_fetch:
+    # Fetch repos if --fetch specified
+    if args.fetch:
         _, fetch_success = fetch_repos_with_progress(
             all_repos,
             include_submodules=True,

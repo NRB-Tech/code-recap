@@ -754,9 +754,9 @@ def add_research_args(parser: argparse.ArgumentParser) -> None:
         help="Maximum diff lines per commit (default: 500).",
     )
     parser.add_argument(
-        "--no-fetch",
+        "--fetch",
         action="store_true",
-        help="Skip fetching repositories before processing.",
+        help="Fetch repositories before processing (updates from remotes).",
     )
 
 
@@ -829,8 +829,8 @@ def cmd_research(args: argparse.Namespace) -> int:
     # Parse period
     label, start_date, end_date = parse_period(args.period)
 
-    # Fetch repos
-    if not args.no_fetch:
+    # Fetch repos if requested
+    if args.fetch:
         fetch_repos_with_progress(repos, include_submodules=True, output=sys.stderr)
 
     # Run research stage
@@ -1007,8 +1007,8 @@ def cmd_full(args: argparse.Namespace) -> int:
     # Parse period
     label, start_date, end_date = parse_period(args.period)
 
-    # Fetch repos
-    if not args.no_fetch:
+    # Fetch repos if requested
+    if args.fetch:
         fetch_repos_with_progress(repos, include_submodules=True, output=sys.stderr)
 
     # Determine output paths
