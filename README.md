@@ -1,6 +1,23 @@
-# Code Recap
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="logo.svg">
+    <img src="logo.svg" alt="Code Recap" width="400">
+  </picture>
+</p>
 
-Generate beautiful activity reports, client summaries, and blog posts from your git history—powered by LLMs.
+<p align="center">
+  Generate beautiful activity reports, client summaries, and blog posts from your git history—powered by LLMs.
+</p>
+
+<p align="center">
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#use-cases">Use Cases</a> •
+  <a href="docs/commands.md">Commands</a> •
+  <a href="docs/configuration.md">Configuration</a>
+</p>
+
+---
 
 ## What It Does
 
