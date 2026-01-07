@@ -157,6 +157,16 @@ code-recap blog full "Building a Real-Time LED Controller" --period 2025-09
 code-recap blog research "My Topic" --period 2025-Q3
 # Edit output/blog/my-topic/research.md if needed
 code-recap blog write output/blog/my-topic/research.md
+
+# With description and writing instructions
+code-recap blog research "AccessorySetupKit Integration" --period 2025-08 \
+  -d "Focus on how we implemented Apple's AccessorySetupKit for seamless BLE pairing" \
+  -i "Write for a non-technical audience, focus on user benefits"
+
+# Refine a draft with feedback
+code-recap blog review post.md --feedback "Make it more beginner-friendly"
+code-recap blog review post.md --feedback-file feedback.txt
+echo "Focus on error handling" | code-recap blog review post.md
 ```
 
 ### Subcommands
@@ -166,14 +176,46 @@ code-recap blog write output/blog/my-topic/research.md
 | `research` | Analyze commits and gather material |
 | `write` | Generate blog post from research |
 | `full` | Research + write in one step |
+| `review` | Refine a draft with user feedback |
 
-### Options
+### Research Options
 
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--period` | Time period to analyze | Required |
+| `-d, --description` | Additional context about the topic | — |
+| `-i, --instructions` | Writing instructions (audience, tone, style) | — |
 | `--model` | LLM model | `gpt-4o-mini` |
 | `--client` | Filter to specific client | All |
+
+### Review Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-f, --feedback` | Feedback to incorporate | — |
+| `--feedback-file` | Path to file containing feedback | — |
+| `--research` | Path to research file for context | Auto-detected |
+| `-o, --output` | Output file | Auto-incremented (v2, v3, etc.) |
+
+If no `--feedback` or `--feedback-file` is provided, feedback is read from stdin.
+
+### Key Files with Commit Specifiers
+
+The research stage identifies key implementation files. You can edit the research output
+to specify which version of a file to retrieve:
+
+```markdown
+## Key Files
+* `AccessorySetupKitManager.swift` (AirTurn-Studio-iOS) - Core ASK manager
+* `BLEDeviceDiscovery.swift` (AirTurn-Studio-iOS) @ before - How discovery worked previously
+* `ConnectionFlow.swift` (AirTurn-Studio-iOS) @ abc123de - Intermediate state
+```
+
+| Specifier | Description |
+|-----------|-------------|
+| (none) | Last commit in the period that touched the file |
+| `@ before` | State before the first commit in the period |
+| `@ <sha>` | Specific commit hash |
 
 ---
 

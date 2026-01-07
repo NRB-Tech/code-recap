@@ -54,11 +54,12 @@ DEFAULT_MODEL = "gpt-4o-mini"
 # Research stage system prompt
 RESEARCH_SYSTEM_PROMPT = """You are an expert software developer analyzing git commits to identify material for a blog post.
 
-Your task is to review the provided git activity and identify commits that are DIRECTLY relevant to the blog post topic. The full commit diffs will be provided to the writing stage, so your job is to:
+Your task is to review the provided git activity and identify commits that are DIRECTLY relevant to the blog post topic. The writing stage will receive both the commit diffs AND the final state of key files, so your job is to:
 
 1. Identify which commits are relevant
 2. Briefly explain WHY each is relevant to the topic
-3. Suggest how the commits might be organized into a narrative
+3. Identify the KEY FILES that represent the final implementation (these will be retrieved in full)
+4. Suggest how the content might be organized into a narrative
 
 IMPORTANT: Only include commits that are directly relevant to the topic. Do NOT include tangentially related changes just to have something to report. Quality over quantity.
 
@@ -66,6 +67,24 @@ Structure your response as follows:
 
 ## Summary
 A 2-3 sentence overview of the relevant work found and how it relates to the blog topic.
+
+## Key Files
+List the most important files that represent the implementation. These files will be retrieved to show the complete implementation (not just diffs).
+
+Format: `path/to/file.ext` (repo-name) - brief description of what this file contains
+
+You can optionally specify which version of the file to retrieve:
+- `path/to/file.ext` (repo-name) - the final version (last commit in the period that touched it)
+- `path/to/file.ext` (repo-name) @ before - the version BEFORE any changes in this period
+- `path/to/file.ext` (repo-name) @ abc123de - a specific commit
+
+Use "@ before" when showing how something worked previously (e.g., "this is how we used to do it").
+Use specific commit SHAs when a particular intermediate state is important.
+
+Include 3-8 files maximum. Focus on files that:
+- Contain the core implementation logic
+- Would be most useful for readers to see in full
+- Represent the "finished product" rather than intermediate states
 
 ## Relevant Commits
 
@@ -76,7 +95,7 @@ Group related commits together. For each group:
 **Repository**: [repo name]
 **Relevance**: [1-2 sentences explaining why these commits are relevant to the blog topic]
 
-Do NOT include code snippets - the full diffs will be provided to the writing stage.
+Do NOT include code snippets - the full diffs and final file states will be provided to the writing stage.
 
 If NO relevant changes are found for the topic, you MUST respond with EXACTLY this format:
 
@@ -92,18 +111,24 @@ IMPORTANT: Always include commit SHAs so they can be retrieved later. Use the fo
 WRITE_SYSTEM_PROMPT = """You are an expert technical writer creating a blog post.
 
 You have been provided with:
-1. A research summary briefly describing which commits are relevant and why
-2. The full diffs of those commits - this is your PRIMARY source material
+1. A research summary identifying relevant commits and key files
+2. The FINAL STATE of key implementation files - use these as your PRIMARY source for code examples
+3. Commit diffs showing how the implementation evolved - use these for context on design decisions
 
-Your task is to write an engaging, informative blog post. Use the research summary to understand what's relevant, but write based on the actual code in the diffs.
+IMPORTANT GUIDANCE:
+- Write mainly about the final implementation, rather than the changes that led to it, unless they are particularly interesting or relevant to the topic.
+- Code examples should come from the final file states, showing working code readers can learn from
+- The diffs are for YOUR context to understand design decisions - don't focus on "we changed X to Y"
+- Focus on generally useful patterns (applicable to anyone) over app-specific details
+- When showing implementation-specific code, note what parts are specific to this app vs generally applicable
 
 The blog post should:
-- Have a compelling introduction that hooks the reader
-- Explain the problem being solved or feature being built
-- Walk through the implementation with code examples from the diffs
-- Use ONLY code from the provided diffs (never fabricate examples)
-- Include insights about design decisions and tradeoffs
-- Have a conclusion that summarizes key takeaways
+- Have a compelling introduction explaining the problem being solved
+- Present the solution as a coherent implementation, not a series of changes
+- Include code examples from the final file states (not fabricated)
+- Explain the "why" behind design decisions
+- Note where implementation details are app-specific vs generally applicable
+- Have a conclusion with key takeaways
 
 Format the output as clean markdown suitable for publishing. Include:
 - A title (# heading)
@@ -112,6 +137,33 @@ Format the output as clean markdown suitable for publishing. Include:
 - Any relevant callouts or tips
 
 Do NOT include meta-commentary about writing the blog post - just output the blog post itself."""
+
+# Review stage system prompt
+REVIEW_SYSTEM_PROMPT = """You are an expert technical editor reviewing and refining a blog post.
+
+You have been provided with:
+1. The original topic and writing instructions
+2. A draft blog post
+3. User feedback to incorporate
+
+Your task is to produce a refined version of the blog post that:
+- Addresses the user's feedback directly
+- Maintains the strengths of the original draft
+- Stays true to the original topic and instructions
+- Improves clarity, accuracy, and engagement
+
+Guidelines:
+- Make substantive improvements based on the feedback, not just cosmetic changes
+- If feedback conflicts with the original instructions, prioritize the feedback (it's more recent)
+- Preserve accurate technical content and code examples from the original
+- If feedback asks to change factual content you're unsure about, note this in a comment
+
+Output ONLY the refined blog post in clean markdown format. Do NOT include:
+- Meta-commentary about your changes
+- A summary of what you changed
+- The original draft for comparison
+
+Just output the improved blog post."""
 
 
 @dataclass
@@ -254,6 +306,232 @@ def extract_commit_shas_from_research(content: str) -> list[tuple[str, str]]:
             results.append((sha, ""))
 
     return results
+
+
+def extract_key_files_from_research(content: str) -> list[tuple[str, str, str]]:
+    """Extracts key file references from research markdown content.
+
+    Looks for the "## Key Files" section and extracts file paths with repo names
+    and optional commit specifiers.
+
+    Expected formats:
+    - `path/to/file.ext` (repo-name) - description
+    - `path/to/file.ext` (repo-name) @ before - description
+    - `path/to/file.ext` (repo-name) @ abc123 - description
+
+    Commit specifiers:
+    - No specifier or "after": last commit in period that touched the file
+    - "before": state before the first commit in period
+    - "<sha>": specific commit hash
+
+    Args:
+        content: The research markdown content.
+
+    Returns:
+        List of (file_path, repo_name, commit_specifier) tuples.
+        commit_specifier is "after" (default), "before", or a specific SHA.
+    """
+    results: list[tuple[str, str, str]] = []
+
+    # Find the Key Files section
+    key_files_match = re.search(
+        r"##\s*Key Files\s*\n(.*?)(?=\n##|\Z)",
+        content,
+        re.DOTALL | re.IGNORECASE,
+    )
+    if not key_files_match:
+        return results
+
+    key_files_section = key_files_match.group(1)
+
+    # Pattern: `path/to/file.ext` (repo-name) [@ specifier]
+    # Matches: file path, repo name, optional @ specifier
+    pattern = r"`([^`]+\.[a-zA-Z0-9]+)`\s*\(([^)]+)\)(?:\s*@\s*(\S+))?"
+    matches = re.findall(pattern, key_files_section)
+
+    for file_path, repo_name, specifier in matches:
+        repo_name = repo_name.strip()
+        specifier = specifier.strip().lower() if specifier else "after"
+        if specifier == "":
+            specifier = "after"
+        results.append((file_path.strip(), repo_name, specifier))
+
+    return results
+
+
+def get_file_contents(repo_path: str, file_path: str, max_lines: int = 500) -> Optional[str]:
+    """Retrieves the current contents of a file from a repository.
+
+    Args:
+        repo_path: Path to the repository.
+        file_path: Path to the file within the repository.
+        max_lines: Maximum lines to include (0 for unlimited).
+
+    Returns:
+        File contents if found, None otherwise.
+    """
+    full_path = os.path.join(repo_path, file_path)
+    if not os.path.isfile(full_path):
+        return None
+
+    try:
+        with open(full_path, encoding="utf-8", errors="replace") as f:
+            if max_lines > 0:
+                lines = []
+                for i, line in enumerate(f):
+                    if i >= max_lines:
+                        lines.append(f"\n... (truncated, file continues beyond {max_lines} lines)")
+                        break
+                    lines.append(line)
+                return "".join(lines)
+            else:
+                return f.read()
+    except Exception:
+        return None
+
+
+def retrieve_key_files(
+    root: str,
+    key_files: list[tuple[str, str, str]],
+    period: str = "",
+    max_lines: int = 500,
+) -> list[tuple[str, str, str, str]]:
+    """Retrieves the contents of key files from repositories at specific commits.
+
+    Args:
+        root: Root directory containing repositories.
+        key_files: List of (file_path, repo_name, commit_specifier) tuples.
+            commit_specifier can be "after", "before", or a specific SHA.
+        period: The analysis period (e.g., "2025-08" or "2025-08-01:2025-08-31").
+            Used to determine date range for "before" and "after" specifiers.
+        max_lines: Maximum lines per file.
+
+    Returns:
+        List of (file_path, repo_name, contents, commit_info) tuples.
+        commit_info describes which version was retrieved.
+    """
+    results: list[tuple[str, str, str, str]] = []
+
+    # Parse period into since/until dates
+    since, until = "", ""
+    if period:
+        if ":" in period:
+            since, until = period.split(":", 1)
+        elif len(period) == 7:  # YYYY-MM format
+            year, month = period.split("-")
+            since = f"{year}-{month}-01"
+            # Calculate last day of month
+            import calendar
+
+            _, last_day = calendar.monthrange(int(year), int(month))
+            until = f"{year}-{month}-{last_day:02d}"
+        else:
+            since = period
+            until = period
+
+    for file_path, repo_name, specifier in key_files:
+        repo_path = find_repo_by_name(root, repo_name)
+        if not repo_path:
+            continue
+
+        contents = None
+        commit_info = ""
+
+        if specifier == "after" or specifier == "":
+            # Get file at the last commit that touched it in the period
+            if since and until:
+                sha = find_last_commit_for_file(repo_path, file_path, since, until)
+                if sha:
+                    contents = get_file_at_commit(repo_path, file_path, sha)
+                    commit_info = f"at {sha[:8]} (last commit in period)"
+            # Fall back to HEAD if no commit found in period
+            if not contents:
+                contents = get_file_contents(repo_path, file_path, max_lines)
+                commit_info = "at HEAD"
+
+        elif specifier == "before":
+            # Get file at state before the first commit in the period
+            if since and until:
+                first_sha = find_first_commit_for_file(repo_path, file_path, since, until)
+                if first_sha:
+                    parent_sha = get_parent_commit(repo_path, first_sha)
+                    if parent_sha:
+                        contents = get_file_at_commit(repo_path, file_path, parent_sha)
+                        commit_info = f"at {parent_sha[:8]} (before first change)"
+            if not contents:
+                commit_info = "(file did not exist before period)"
+
+        else:
+            # Treat as specific SHA
+            contents = get_file_at_commit(repo_path, file_path, specifier)
+            commit_info = f"at {specifier}"
+
+        if contents:
+            # Truncate if needed
+            lines = contents.split("\n")
+            if max_lines > 0 and len(lines) > max_lines:
+                contents = "\n".join(lines[:max_lines])
+                contents += f"\n... (truncated, {len(lines) - max_lines} more lines)"
+
+            results.append((file_path, repo_name, contents, commit_info))
+
+    return results
+
+
+def format_key_files_for_prompt(
+    key_files: list[tuple[str, str, str]] | list[tuple[str, str, str, str]],
+) -> str:
+    """Formats key file contents for inclusion in an LLM prompt.
+
+    Args:
+        key_files: List of (file_path, repo_name, contents) or
+            (file_path, repo_name, contents, commit_info) tuples.
+
+    Returns:
+        Formatted string with all file contents.
+    """
+    if not key_files:
+        return "(No key files could be retrieved)"
+
+    lines = [f"# Key Implementation Files ({len(key_files)} files)", ""]
+    lines.append("These are the FINAL versions of the key files - use these for code examples.\n")
+
+    for item in key_files:
+        # Handle both 3-tuple and 4-tuple formats
+        if len(item) == 4:
+            file_path, repo_name, contents, commit_info = item
+        else:
+            file_path, repo_name, contents = item
+            commit_info = ""
+
+        # Determine language from file extension
+        ext = os.path.splitext(file_path)[1].lower()
+        lang_map = {
+            ".swift": "swift",
+            ".kt": "kotlin",
+            ".java": "java",
+            ".py": "python",
+            ".js": "javascript",
+            ".ts": "typescript",
+            ".c": "c",
+            ".h": "c",
+            ".cpp": "cpp",
+            ".m": "objc",
+            ".rs": "rust",
+            ".go": "go",
+        }
+        lang = lang_map.get(ext, "")
+
+        header = f"## {file_path} ({repo_name})"
+        if commit_info:
+            header += f" {commit_info}"
+        lines.append(header)
+        lines.append(f"```{lang}")
+        lines.append(contents.rstrip())
+        lines.append("```")
+        lines.append("")
+
+    return "\n".join(lines)
 
 
 def format_research_metadata(
@@ -403,6 +681,102 @@ def find_repo_by_name(root: str, repo_name: str) -> Optional[str]:
             if os.path.basename(sub_path).lower() == repo_name.lower():
                 return sub_path
 
+    return None
+
+
+def get_file_at_commit(repo_path: str, file_path: str, sha: str) -> Optional[str]:
+    """Retrieves file contents at a specific commit.
+
+    Args:
+        repo_path: Path to the repository.
+        file_path: Path to the file relative to repo root.
+        sha: Commit SHA to retrieve file from.
+
+    Returns:
+        File contents as string, or None if not found.
+    """
+    code, out, _ = run_git(repo_path, ["show", f"{sha}:{file_path}"])
+    return out if code == 0 else None
+
+
+def find_last_commit_for_file(
+    repo_path: str,
+    file_path: str,
+    since: str,
+    until: str,
+) -> Optional[str]:
+    """Find the last commit that touched a file in a date range.
+
+    Args:
+        repo_path: Path to the repository.
+        file_path: Path to the file relative to repo root.
+        since: Start date (ISO format or git-parseable).
+        until: End date (ISO format or git-parseable).
+
+    Returns:
+        Commit SHA if found, None otherwise.
+    """
+    args = [
+        "log",
+        "--format=%H",
+        "-1",
+        f"--since={since}",
+        f"--until={until}",
+        "--",
+        file_path,
+    ]
+    code, out, _ = run_git(repo_path, args)
+    if code == 0 and out.strip():
+        return out.strip()
+    return None
+
+
+def find_first_commit_for_file(
+    repo_path: str,
+    file_path: str,
+    since: str,
+    until: str,
+) -> Optional[str]:
+    """Find the first commit that touched a file in a date range.
+
+    Args:
+        repo_path: Path to the repository.
+        file_path: Path to the file relative to repo root.
+        since: Start date (ISO format or git-parseable).
+        until: End date (ISO format or git-parseable).
+
+    Returns:
+        Commit SHA if found, None otherwise.
+    """
+    args = [
+        "log",
+        "--format=%H",
+        "--reverse",
+        "-1",
+        f"--since={since}",
+        f"--until={until}",
+        "--",
+        file_path,
+    ]
+    code, out, _ = run_git(repo_path, args)
+    if code == 0 and out.strip():
+        return out.strip()
+    return None
+
+
+def get_parent_commit(repo_path: str, sha: str) -> Optional[str]:
+    """Get the parent commit of a given commit.
+
+    Args:
+        repo_path: Path to the repository.
+        sha: Commit SHA.
+
+    Returns:
+        Parent commit SHA, or None if no parent (root commit).
+    """
+    code, out, _ = run_git(repo_path, ["rev-parse", f"{sha}^"])
+    if code == 0 and out.strip():
+        return out.strip()
     return None
 
 
@@ -728,6 +1102,18 @@ def run_write_stage(
     else:
         commits_text = "(No referenced commits could be retrieved)"
 
+    # Extract and retrieve key files
+    key_file_refs = extract_key_files_from_research(research_content)
+    key_files_text = ""
+    if key_file_refs:
+        print(f"Retrieving {len(key_file_refs)} key files...", file=sys.stderr)
+        root = metadata.root or os.path.dirname(os.getcwd())
+        period = metadata.period if metadata else ""
+        key_files = retrieve_key_files(root, key_file_refs, period=period, max_lines=500)
+        print(f"Retrieved {len(key_files)} key files", file=sys.stderr)
+        if key_files:
+            key_files_text = format_key_files_for_prompt(key_files)
+
     # Build instructions section
     instructions_section = ""
     if metadata.instructions:
@@ -735,6 +1121,13 @@ def run_write_stage(
 # Writing Instructions
 
 {metadata.instructions}
+"""
+
+    # Build key files section
+    key_files_section = ""
+    if key_files_text:
+        key_files_section = f"""
+{key_files_text}
 """
 
     # Build user prompt
@@ -745,12 +1138,12 @@ def run_write_stage(
 # Research Summary
 
 {research_content}
-
-# Full Diffs for Referenced Commits
+{key_files_section}
+# Commit Diffs (for context on how the implementation evolved)
 
 {commits_text}
 
-Please write a blog post based on this material. Use the actual code from the diffs for examples."""
+Write a blog post based on this material. Use the KEY FILES above for code examples (they show the final implementation). Use the commit diffs for context on design decisions, but focus on the end result, not the changes."""
 
     # Build system prompt with context
     system_prompt = WRITE_SYSTEM_PROMPT
@@ -772,6 +1165,144 @@ Please write a blog post based on this material. Use the actual code from the di
         print(f"Writing complete (cost: ${cost_tracker.total_cost:.4f})", file=sys.stderr)
 
     return blog_content, cost_tracker
+
+
+def increment_version_filename(filepath: str) -> str:
+    """Increments the version number in a filename.
+
+    Transforms:
+    - post.md -> post-v2.md
+    - post-v2.md -> post-v3.md
+    - post-v10.md -> post-v11.md
+
+    Args:
+        filepath: Path to the file.
+
+    Returns:
+        New filepath with incremented version number.
+    """
+    dir_name = os.path.dirname(filepath)
+    base_name = os.path.basename(filepath)
+    name, ext = os.path.splitext(base_name)
+
+    # Check for existing version pattern
+    version_match = re.match(r"(.+)-v(\d+)$", name)
+    if version_match:
+        base = version_match.group(1)
+        version = int(version_match.group(2)) + 1
+    else:
+        base = name
+        version = 2
+
+    new_name = f"{base}-v{version}{ext}"
+    return os.path.join(dir_name, new_name) if dir_name else new_name
+
+
+def find_research_file(draft_path: str) -> Optional[str]:
+    """Attempts to find the research file for a draft blog post.
+
+    Looks for research.md in the same directory as the draft.
+
+    Args:
+        draft_path: Path to the draft blog post.
+
+    Returns:
+        Path to research file if found, None otherwise.
+    """
+    dir_name = os.path.dirname(draft_path) or "."
+    research_path = os.path.join(dir_name, "research.md")
+    if os.path.isfile(research_path):
+        return research_path
+    return None
+
+
+def run_review_stage(
+    draft_path: str,
+    feedback: str,
+    model: str,
+    temperature: float,
+    max_cost: float,
+    research_path: Optional[str] = None,
+    global_context: str = "",
+    client_context: str = "",
+    dry_run: bool = False,
+) -> tuple[str, CostTracker]:
+    """Runs the review stage to refine a blog post with feedback.
+
+    Args:
+        draft_path: Path to the draft blog post.
+        feedback: User feedback to incorporate.
+        model: LLM model to use.
+        temperature: LLM temperature.
+        max_cost: Maximum allowed cost.
+        research_path: Optional path to research file for context.
+        global_context: Company context for prompt.
+        client_context: Client-specific context for prompt.
+        dry_run: If True, don't call LLM.
+
+    Returns:
+        Tuple of (refined_blog_post, cost_tracker).
+    """
+    cost_tracker = CostTracker()
+
+    # Read draft
+    print(f"Reading draft from: {draft_path}", file=sys.stderr)
+    with open(draft_path) as f:
+        draft_content = f.read()
+
+    # Try to find and read research file for context
+    topic = ""
+    instructions = ""
+    if not research_path:
+        research_path = find_research_file(draft_path)
+
+    if research_path and os.path.isfile(research_path):
+        print(f"Reading research context from: {research_path}", file=sys.stderr)
+        with open(research_path) as f:
+            research_content = f.read()
+        metadata = parse_research_metadata(research_content)
+        if metadata:
+            topic = metadata.topic
+            instructions = metadata.instructions
+
+    # Build context section
+    context_section = ""
+    if topic:
+        context_section += f"# Original Topic\n\n{topic}\n\n"
+    if instructions:
+        context_section += f"# Original Writing Instructions\n\n{instructions}\n\n"
+
+    # Build user prompt
+    user_prompt = f"""{context_section}# Draft Blog Post
+
+{draft_content}
+
+# Feedback to Incorporate
+
+{feedback}
+
+Please produce a refined version of the blog post that addresses this feedback."""
+
+    # Build system prompt with context
+    system_prompt = REVIEW_SYSTEM_PROMPT
+    if global_context or client_context:
+        system_prompt += "\n\n---\n\nContext:\n"
+        if global_context:
+            system_prompt += f"\nCompany Background:\n{global_context}\n"
+        if client_context:
+            system_prompt += f"\nClient Context:\n{client_context}\n"
+
+    if dry_run:
+        print(f"[DRY RUN] Would send {len(user_prompt)} chars to LLM", file=sys.stderr)
+        refined_content = "*(Dry run - blog post would be refined with feedback)*"
+    else:
+        print("Calling LLM to review and refine blog post...", file=sys.stderr)
+        refined_content = call_llm(
+            model, system_prompt, user_prompt, temperature, cost_tracker, max_cost
+        )
+        print(f"Review complete (cost: ${cost_tracker.total_cost:.4f})", file=sys.stderr)
+
+    return refined_content, cost_tracker
 
 
 def add_common_args(parser: argparse.ArgumentParser) -> None:
@@ -1037,6 +1568,90 @@ def cmd_write(args: argparse.Namespace) -> int:
         with open(output_path, "w") as f:
             f.write(output)
         print(f"Blog post written to: {output_path}", file=sys.stderr)
+
+    print(f"Cost: {cost_tracker.summary()}", file=sys.stderr)
+    return 0
+
+
+def cmd_review(args: argparse.Namespace) -> int:
+    """Handles the 'review' subcommand.
+
+    Args:
+        args: Parsed command-line arguments.
+
+    Returns:
+        Exit code (0 for success).
+    """
+    draft_path = args.draft_file
+
+    if not os.path.isfile(draft_path):
+        print(f"Error: Draft file not found: {draft_path}", file=sys.stderr)
+        return 1
+
+    # Get feedback from flag, file, or stdin
+    feedback = ""
+    if args.feedback:
+        feedback = args.feedback
+    elif args.feedback_file:
+        if not os.path.isfile(args.feedback_file):
+            print(f"Error: Feedback file not found: {args.feedback_file}", file=sys.stderr)
+            return 1
+        with open(args.feedback_file) as f:
+            feedback = f.read().strip()
+    else:
+        # Check if stdin has data (non-blocking check)
+        import select
+
+        if select.select([sys.stdin], [], [], 0.0)[0]:
+            feedback = sys.stdin.read().strip()
+
+    if not feedback:
+        print(
+            "Error: No feedback provided. Use --feedback, --feedback-file, or pipe to stdin.",
+            file=sys.stderr,
+        )
+        return 1
+
+    # Load config and API keys
+    config_file = get_config_path(args.config)
+    load_api_keys_from_config(config_file)
+    client_config, _, _, _ = load_config(str(config_file))
+
+    global_context = ""
+    client_context = ""
+    if client_config:
+        global_context = client_config.global_context
+
+    # Determine research file path
+    research_path = args.research if hasattr(args, "research") and args.research else None
+
+    # Run review stage
+    output, cost_tracker = run_review_stage(
+        draft_path=draft_path,
+        feedback=feedback,
+        model=args.model,
+        temperature=args.temperature,
+        max_cost=args.max_cost,
+        research_path=research_path,
+        global_context=global_context,
+        client_context=client_context,
+        dry_run=args.dry_run,
+    )
+
+    # Determine output path
+    if args.stdout:
+        print(output)
+    elif args.output:
+        os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+        with open(args.output, "w") as f:
+            f.write(output)
+        print(f"Refined post written to: {args.output}", file=sys.stderr)
+    else:
+        # Auto-increment version
+        output_path = increment_version_filename(draft_path)
+        with open(output_path, "w") as f:
+            f.write(output)
+        print(f"Refined post written to: {output_path}", file=sys.stderr)
 
     print(f"Cost: {cost_tracker.summary()}", file=sys.stderr)
     return 0
@@ -1326,6 +1941,31 @@ Examples:
     add_research_args(full_parser)
     add_common_args(full_parser)
 
+    # Review subcommand
+    review_parser = subparsers.add_parser(
+        "review",
+        help="Refine a blog post draft with feedback",
+        description="Critique and refine a draft blog post based on user feedback.",
+    )
+    review_parser.add_argument(
+        "draft_file",
+        help="Path to the draft blog post to refine.",
+    )
+    review_parser.add_argument(
+        "--feedback",
+        "-f",
+        help="Feedback to incorporate into the refined post.",
+    )
+    review_parser.add_argument(
+        "--feedback-file",
+        help="Path to a file containing feedback.",
+    )
+    review_parser.add_argument(
+        "--research",
+        help="Path to research file for context (auto-detected if not specified).",
+    )
+    add_common_args(review_parser)
+
     # List models subcommand
     models_parser = subparsers.add_parser(
         "list-models",
@@ -1349,6 +1989,8 @@ Examples:
         return cmd_write(args)
     elif args.command == "full":
         return cmd_full(args)
+    elif args.command == "review":
+        return cmd_review(args)
     elif args.command == "list-models":
         return cmd_list_models(args)
 

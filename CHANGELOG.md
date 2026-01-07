@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Blog review command** — New `blog review` subcommand for iteratively refining blog posts with user feedback. Supports feedback via `--feedback` flag, `--feedback-file`, or stdin piping.
+- **Auto-increment versions** — Review command auto-increments output filenames (`post.md` → `post-v2.md` → `post-v3.md`).
+- **Commit-aware file retrieval** — Key files are now retrieved at the commit that last touched them during the analysis period, not just HEAD. Supports `@ before` to get pre-change state and `@ <sha>` for specific commits.
+
 ## [1.2.0] - 2026-01-07
 
 ### Added
@@ -15,7 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pre-commit hooks for ruff linting and formatting
 
 ### Changed
-- **Streamlined blog research** — Research stage now produces concise commit relevance summaries instead of detailed analysis with code snippets. The write stage relies on the actual diffs for content, reducing redundancy and token usage.
+- **Streamlined blog research** — Research stage now produces concise commit relevance summaries instead of detailed analysis with code snippets. Also identifies key implementation files.
+- **Key files in write stage** — Write stage now retrieves the final state of key implementation files (not just diffs), enabling code examples from the working implementation rather than change history
+- **Improved write prompts** — Better guidance for distinguishing general patterns vs app-specific details, and focusing on the final implementation rather than the development journey
 - Blog research now fails (exit code 1) when LLM finds no relevant changes for the topic, instead of returning tangentially related content
 
 ### Fixed
