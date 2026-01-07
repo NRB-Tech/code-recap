@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-01-07
+
 ### Added
 - **Blog post description** — New `-d`/`--description` option for `blog research` and `blog full` commands to provide research context
 - **Blog writing instructions** — New `-i`/`--instructions` option for writing guidance (audience, tone, style) that's passed to the write stage
@@ -114,7 +116,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dark/light theme toggle
 - Company override per client for subcontracted work
 
-[Unreleased]: https://github.com/nrbrook/code-recap/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/nrbrook/code-recap/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/nrbrook/code-recap/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/nrbrook/code-recap/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/nrbrook/code-recap/compare/v1.0.4...v1.1.0
 [1.0.4]: https://github.com/nrbrook/code-recap/compare/v1.0.3...v1.0.4
