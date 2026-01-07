@@ -227,3 +227,9 @@ uv run ruff format .
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">
+  Built by <a href="https://nrbtech.io">NRB Tech</a>
+</p>
