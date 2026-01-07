@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-01-07
+
 ### Added
 - **Blog review command** — New `blog review` subcommand for iteratively refining blog posts with user feedback. Supports feedback via `--feedback` flag, `--feedback-file`, or stdin piping.
 - **Auto-increment versions** — Review command auto-increments output filenames (`post.md` → `post-v2.md` → `post-v3.md`).
@@ -123,7 +125,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dark/light theme toggle
 - Company override per client for subcontracted work
 
-[Unreleased]: https://github.com/nrbrook/code-recap/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/nrbrook/code-recap/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/nrbrook/code-recap/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/nrbrook/code-recap/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/nrbrook/code-recap/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/nrbrook/code-recap/compare/v1.0.4...v1.1.0
