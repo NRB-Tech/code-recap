@@ -17,6 +17,13 @@
   <a href="docs/configuration.md">Configuration</a>
 </p>
 
+<p align="center">
+  <a href="https://pypi.org/project/code-recap/"><img src="https://img.shields.io/pypi/v/code-recap?color=6366f1&label=PyPI" alt="PyPI"></a>
+  <a href="https://pypi.org/project/code-recap/"><img src="https://img.shields.io/pypi/pyversions/code-recap?color=8b5cf6" alt="Python"></a>
+  <a href="https://github.com/nrb-tech/code-recap/blob/main/LICENSE"><img src="https://img.shields.io/github/license/nrb-tech/code-recap?color=a78bfa" alt="License"></a>
+  <a href="https://pepy.tech/project/code-recap"><img src="https://img.shields.io/pepy/dt/code-recap?color=c4b5fd&label=downloads" alt="Downloads"></a>
+</p>
+
 ---
 
 ## What It Does
