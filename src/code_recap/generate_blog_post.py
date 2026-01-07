@@ -18,7 +18,7 @@ import os
 import re
 import sys
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Union
 
 from code_recap.arguments import (
     add_author_arg,
@@ -479,7 +479,7 @@ def retrieve_key_files(
 
 
 def format_key_files_for_prompt(
-    key_files: list[tuple[str, str, str]] | list[tuple[str, str, str, str]],
+    key_files: Union[list[tuple[str, str, str]], list[tuple[str, str, str, str]]],
 ) -> str:
     """Formats key file contents for inclusion in an LLM prompt.
 
