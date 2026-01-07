@@ -8,7 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Blog post description** — New `-d`/`--description` option for `blog research` and `blog full` commands to provide research context
+- **Blog writing instructions** — New `-i`/`--instructions` option for writing guidance (audience, tone, style) that's passed to the write stage
 - Pre-commit hooks for ruff linting and formatting
+
+### Changed
+- **Streamlined blog research** — Research stage now produces concise commit relevance summaries instead of detailed analysis with code snippets. The write stage relies on the actual diffs for content, reducing redundancy and token usage.
+- Blog research now fails (exit code 1) when LLM finds no relevant changes for the topic, instead of returning tangentially related content
+
+### Fixed
+- Blog research now correctly extracts repository names from structured LLM output (fixes empty `repo:` fields in metadata)
 - **S3 deployment provider** — Deploy HTML reports to AWS S3 buckets. Requires AWS CLI.
 - **Plugin system for deployment providers** — Create custom providers in separate packages without modifying Code Recap source. Use the `code_recap.deploy_providers` entry point group.
 - Documentation split into separate files under `docs/`:

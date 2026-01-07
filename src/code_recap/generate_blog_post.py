@@ -52,59 +52,58 @@ from code_recap.summarize_activity import (
 DEFAULT_MODEL = "gpt-4o-mini"
 
 # Research stage system prompt
-RESEARCH_SYSTEM_PROMPT = """You are an expert software developer analyzing git commits to research material for a blog post.
+RESEARCH_SYSTEM_PROMPT = """You are an expert software developer analyzing git commits to identify material for a blog post.
 
-Your task is to review the provided git activity and identify changes that are relevant to the blog post topic. For each relevant change:
+Your task is to review the provided git activity and identify commits that are DIRECTLY relevant to the blog post topic. The full commit diffs will be provided to the writing stage, so your job is to:
 
-1. Note the commit SHA (use the full SHA provided, it will be truncated for display)
-2. List the files that were modified
-3. Summarize what was changed and why it's relevant to the blog topic
-4. Include key code snippets that would be useful for the blog post
+1. Identify which commits are relevant
+2. Briefly explain WHY each is relevant to the topic
+3. Suggest how the commits might be organized into a narrative
 
-Be thorough - the commits you reference will be retrieved in full during the writing stage, so make sure to identify all relevant work.
+IMPORTANT: Only include commits that are directly relevant to the topic. Do NOT include tangentially related changes just to have something to report. Quality over quantity.
 
 Structure your response as follows:
 
 ## Summary
-A brief overview of what relevant work was found.
+A 2-3 sentence overview of the relevant work found and how it relates to the blog topic.
 
-## Relevant Changes
+## Relevant Commits
 
-For each relevant change or feature, create a section:
+Group related commits together. For each group:
 
-### [Descriptive Title]
+### [Descriptive Title for this feature/change]
 **Commits**: [list commit SHAs, e.g., `abc123de`, `def456gh`]
-**Files**: [list of modified files]
 **Repository**: [repo name]
+**Relevance**: [1-2 sentences explaining why these commits are relevant to the blog topic]
 
-[Description of what was changed and why it's relevant]
+Do NOT include code snippets - the full diffs will be provided to the writing stage.
 
-**Key Code**:
-```[language]
-[relevant code snippet]
-```
+If NO relevant changes are found for the topic, you MUST respond with EXACTLY this format:
 
-If no relevant changes are found, clearly state that and explain what was searched.
+## No Relevant Changes Found
+
+[Explanation of what was searched and why nothing matched the topic]
+
+Do not try to find tangentially related content. If the commits don't contain work directly related to the topic, use the "No Relevant Changes Found" format above.
 
 IMPORTANT: Always include commit SHAs so they can be retrieved later. Use the format `abc123de` (8 characters)."""
 
 # Write stage system prompt
-WRITE_SYSTEM_PROMPT = """You are an expert technical writer creating a blog post from research notes.
+WRITE_SYSTEM_PROMPT = """You are an expert technical writer creating a blog post.
 
 You have been provided with:
-1. A research summary identifying relevant code changes
-2. The full diffs of the referenced commits
+1. A research summary briefly describing which commits are relevant and why
+2. The full diffs of those commits - this is your PRIMARY source material
 
-Your task is to write an engaging, informative blog post based on this material. The blog post should:
+Your task is to write an engaging, informative blog post. Use the research summary to understand what's relevant, but write based on the actual code in the diffs.
 
+The blog post should:
 - Have a compelling introduction that hooks the reader
 - Explain the problem being solved or feature being built
-- Walk through the implementation with code examples
-- Use accurate code from the provided diffs (not fabricated examples)
+- Walk through the implementation with code examples from the diffs
+- Use ONLY code from the provided diffs (never fabricate examples)
 - Include insights about design decisions and tradeoffs
 - Have a conclusion that summarizes key takeaways
-
-The tone should be professional but approachable - like explaining to a fellow developer.
 
 Format the output as clean markdown suitable for publishing. Include:
 - A title (# heading)
@@ -121,6 +120,8 @@ class ResearchMetadata:
 
     Attributes:
         topic: The original blog post idea/topic.
+        description: Additional context about the blog post.
+        instructions: Writing instructions (audience, tone, style).
         period: Time period that was analyzed.
         client: Client filter used (if any).
         author: Git author filter.
@@ -129,6 +130,8 @@ class ResearchMetadata:
     """
 
     topic: str
+    description: str
+    instructions: str
     period: str
     client: str
     author: str
@@ -178,6 +181,8 @@ def parse_research_metadata(content: str) -> Optional[ResearchMetadata]:
 
         return ResearchMetadata(
             topic=data.get("topic", ""),
+            description=data.get("description", ""),
+            instructions=data.get("instructions", ""),
             period=data.get("period", ""),
             client=data.get("client", ""),
             author=data.get("author", ""),
@@ -192,7 +197,9 @@ def parse_research_metadata(content: str) -> Optional[ResearchMetadata]:
 def extract_commit_shas_from_research(content: str) -> list[tuple[str, str]]:
     """Extracts commit SHA references from research markdown content.
 
-    Looks for patterns like `abc123de` (ROUTES) in the markdown.
+    Handles two formats:
+    1. Structured sections with **Commits**: and **Repository**: lines
+    2. Inline format: `abc123de` (RepoName) or just `abc123de`
 
     Args:
         content: The research markdown content.
@@ -200,21 +207,59 @@ def extract_commit_shas_from_research(content: str) -> list[tuple[str, str]]:
     Returns:
         List of (sha_prefix, repo_name) tuples found in the content.
     """
-    # Pattern: `abc123de` followed by optional (RepoName)
-    # Also matches just `abc123de` without repo
-    pattern = r"`([a-f0-9]{7,8})`(?:\s*\(([^)]+)\))?"
-    matches = re.findall(pattern, content)
+    results: list[tuple[str, str]] = []
+    seen_shas: set[str] = set()
 
-    results = []
-    for sha, repo in matches:
-        repo_name = repo.strip() if repo else ""
-        results.append((sha, repo_name))
+    # First, extract from structured sections (### Title ... **Commits**: ... **Repository**: ...)
+    # Split by section headers to process each section
+    sections = re.split(r"(?=^###\s)", content, flags=re.MULTILINE)
+
+    for section in sections:
+        # Look for **Commits**: line with backtick-wrapped SHAs
+        commits_match = re.search(r"\*\*Commits?\*\*:\s*(.+?)(?:\n|$)", section, re.IGNORECASE)
+        # Look for **Repository**: line
+        repo_match = re.search(r"\*\*Repository\*\*:\s*(.+?)(?:\n|$)", section, re.IGNORECASE)
+
+        if commits_match:
+            commits_line = commits_match.group(1)
+            repo_name = repo_match.group(1).strip() if repo_match else ""
+            # Strip backticks from repo name (LLM sometimes wraps in backticks)
+            repo_name = repo_name.strip("`")
+
+            # Extract all SHAs from the commits line
+            sha_pattern = r"`([a-f0-9]{7,8})`"
+            shas = re.findall(sha_pattern, commits_line)
+
+            for sha in shas:
+                if sha not in seen_shas:
+                    seen_shas.add(sha)
+                    results.append((sha, repo_name))
+
+    # Also check for inline format: `abc123de` (RepoName) or `abc123de` (Repo-Name)
+    inline_pattern = r"`([a-f0-9]{7,8})`\s*\(([^)]+)\)"
+    inline_matches = re.findall(inline_pattern, content)
+
+    for sha, repo in inline_matches:
+        if sha not in seen_shas:
+            seen_shas.add(sha)
+            results.append((sha, repo.strip()))
+
+    # Finally, extract any remaining standalone SHAs not yet captured
+    all_sha_pattern = r"`([a-f0-9]{7,8})`"
+    all_shas = re.findall(all_sha_pattern, content)
+
+    for sha in all_shas:
+        if sha not in seen_shas:
+            seen_shas.add(sha)
+            results.append((sha, ""))
 
     return results
 
 
 def format_research_metadata(
     topic: str,
+    description: str,
+    instructions: str,
     period: str,
     client: str,
     author: str,
@@ -225,6 +270,8 @@ def format_research_metadata(
 
     Args:
         topic: The blog post topic.
+        description: Additional context about the blog post.
+        instructions: Writing instructions (audience, tone, style).
         period: Time period analyzed.
         client: Client filter (may be empty).
         author: Git author filter.
@@ -237,11 +284,33 @@ def format_research_metadata(
     lines = [
         "<!-- blog-research-meta",
         f"topic: {topic}",
-        f"period: {period}",
-        f"client: {client}",
-        f"author: {author}",
-        f"root: {root}",
     ]
+
+    if description:
+        # Use YAML literal block scalar for multi-line text
+        if "\n" in description:
+            lines.append("description: |")
+            for line in description.split("\n"):
+                lines.append(f"  {line}")
+        else:
+            lines.append(f"description: {description}")
+
+    if instructions:
+        if "\n" in instructions:
+            lines.append("instructions: |")
+            for line in instructions.split("\n"):
+                lines.append(f"  {line}")
+        else:
+            lines.append(f"instructions: {instructions}")
+
+    lines.extend(
+        [
+            f"period: {period}",
+            f"client: {client}",
+            f"author: {author}",
+            f"root: {root}",
+        ]
+    )
 
     if commits:
         lines.append("commits:")
@@ -487,10 +556,12 @@ def run_research_stage(
     temperature: float,
     max_cost: float,
     max_diff_lines: int,
+    description: str = "",
+    instructions: str = "",
     global_context: str = "",
     client_context: str = "",
     dry_run: bool = False,
-) -> tuple[str, CostTracker]:
+) -> tuple[str, CostTracker, bool]:
     """Runs the research stage of blog post generation.
 
     Args:
@@ -506,12 +577,15 @@ def run_research_stage(
         temperature: LLM temperature.
         max_cost: Maximum allowed cost.
         max_diff_lines: Maximum diff lines per commit.
+        description: Additional context about the blog post.
+        instructions: Writing instructions for the blog post (audience, tone, style).
         global_context: Company context for prompt.
         client_context: Client-specific context for prompt.
         dry_run: If True, don't call LLM.
 
     Returns:
-        Tuple of (research_markdown, cost_tracker).
+        Tuple of (research_markdown, cost_tracker, no_relevant_changes).
+        no_relevant_changes is True if LLM found no relevant content for the topic.
     """
     cost_tracker = CostTracker()
 
@@ -529,9 +603,13 @@ def run_research_stage(
     # Build the prompt
     commits_text = format_commits_for_prompt(commits)
 
+    description_section = ""
+    if description:
+        description_section = f"\n# Description\n{description}\n"
+
     user_prompt = f"""# Blog Post Topic
 {topic}
-
+{description_section}
 # Time Period
 {start_date} to {end_date}
 
@@ -551,6 +629,7 @@ Please analyze these commits and identify changes relevant to the blog post topi
     if dry_run:
         print(f"[DRY RUN] Would send {len(user_prompt)} chars to LLM", file=sys.stderr)
         research_content = f"*(Dry run - {len(commits)} commits would be analyzed)*"
+        no_relevant_changes = False
     else:
         print("Calling LLM for research analysis...", file=sys.stderr)
         research_content = call_llm(
@@ -558,12 +637,23 @@ Please analyze these commits and identify changes relevant to the blog post topi
         )
         print(f"Research complete (cost: ${cost_tracker.total_cost:.4f})", file=sys.stderr)
 
+        # Check if LLM found no relevant changes
+        no_relevant_changes = bool(
+            re.search(
+                r"^##\s*No Relevant Changes Found", research_content, re.MULTILINE | re.IGNORECASE
+            )
+        )
+        if no_relevant_changes:
+            print("LLM found no relevant changes for the topic.", file=sys.stderr)
+
     # Extract commit references from the LLM output
     extracted_refs = extract_commit_shas_from_research(research_content)
 
     # Build metadata
     metadata_str = format_research_metadata(
         topic=topic,
+        description=description,
+        instructions=instructions,
         period=period_str,
         client=client,
         author=author,
@@ -574,7 +664,7 @@ Please analyze these commits and identify changes relevant to the blog post topi
     # Combine into final output
     output = f"# Research: {topic}\n\n{metadata_str}\n\n{research_content}"
 
-    return output, cost_tracker
+    return output, cost_tracker, no_relevant_changes
 
 
 def run_write_stage(
@@ -615,6 +705,8 @@ def run_write_stage(
         print("Warning: No metadata found in research file, using defaults", file=sys.stderr)
         metadata = ResearchMetadata(
             topic="",
+            description="",
+            instructions="",
             period="",
             client="",
             author="",
@@ -636,8 +728,21 @@ def run_write_stage(
     else:
         commits_text = "(No referenced commits could be retrieved)"
 
+    # Build instructions section
+    instructions_section = ""
+    if metadata.instructions:
+        instructions_section = f"""
+# Writing Instructions
+
+{metadata.instructions}
+"""
+
     # Build user prompt
-    user_prompt = f"""# Research Summary
+    user_prompt = f"""# Topic
+
+{metadata.topic}
+{instructions_section}
+# Research Summary
 
 {research_content}
 
@@ -645,7 +750,7 @@ def run_write_stage(
 
 {commits_text}
 
-Please write a blog post based on this research. Use the actual code from the diffs for examples."""
+Please write a blog post based on this material. Use the actual code from the diffs for examples."""
 
     # Build system prompt with context
     system_prompt = WRITE_SYSTEM_PROMPT
@@ -711,6 +816,18 @@ def add_research_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "topic",
         help="Blog post topic/idea. Use '-' to read from stdin.",
+    )
+    parser.add_argument(
+        "-d",
+        "--description",
+        metavar="TEXT",
+        help="Additional context or description for the blog post topic.",
+    )
+    parser.add_argument(
+        "-i",
+        "--instructions",
+        metavar="TEXT",
+        help="Writing instructions (e.g., 'write for a non-technical audience').",
     )
     parser.add_argument(
         "--period",
@@ -811,7 +928,7 @@ def cmd_research(args: argparse.Namespace) -> int:
         fetch_repos_with_progress(repos, include_submodules=True, output=sys.stderr)
 
     # Run research stage
-    output, cost_tracker = run_research_stage(
+    output, cost_tracker, no_relevant_changes = run_research_stage(
         topic=topic,
         repos=repos,
         start_date=start_date,
@@ -824,10 +941,19 @@ def cmd_research(args: argparse.Namespace) -> int:
         temperature=args.temperature,
         max_cost=args.max_cost,
         max_diff_lines=args.max_diff_lines,
+        description=args.description or "",
+        instructions=args.instructions or "",
         global_context=global_context,
         client_context=client_context,
         dry_run=args.dry_run,
     )
+
+    print(f"Cost: {cost_tracker.summary()}", file=sys.stderr)
+
+    # Fail if no relevant changes found
+    if no_relevant_changes:
+        print(f"Error: No relevant changes found for topic: {topic}", file=sys.stderr)
+        return 1
 
     # Write output
     if args.stdout:
@@ -849,7 +975,6 @@ def cmd_research(args: argparse.Namespace) -> int:
             f.write(output)
         print(f"Research written to: {output_path}", file=sys.stderr)
 
-    print(f"Cost: {cost_tracker.summary()}", file=sys.stderr)
     return 0
 
 
@@ -1015,7 +1140,7 @@ def cmd_full(args: argparse.Namespace) -> int:
     print("Stage 1: Research", file=sys.stderr)
     print("=" * 60, file=sys.stderr)
 
-    research_output, research_cost = run_research_stage(
+    research_output, research_cost, no_relevant_changes = run_research_stage(
         topic=topic,
         repos=repos,
         start_date=start_date,
@@ -1028,6 +1153,8 @@ def cmd_full(args: argparse.Namespace) -> int:
         temperature=args.temperature,
         max_cost=args.max_cost,
         max_diff_lines=args.max_diff_lines,
+        description=args.description or "",
+        instructions=args.instructions or "",
         global_context=global_context,
         client_context=client_context,
         dry_run=args.dry_run,
@@ -1037,6 +1164,12 @@ def cmd_full(args: argparse.Namespace) -> int:
     total_cost.total_output_tokens += research_cost.total_output_tokens
     total_cost.total_cost += research_cost.total_cost
     total_cost.calls += research_cost.calls
+
+    # Fail if no relevant changes found
+    if no_relevant_changes:
+        print(f"\nTotal cost: {total_cost.summary()}", file=sys.stderr)
+        print(f"Error: No relevant changes found for topic: {topic}", file=sys.stderr)
+        return 1
 
     # Save research
     with open(research_path, "w") as f:
@@ -1138,11 +1271,20 @@ Examples:
   # Stage 1: Research (uses git config user.name by default)
   %(prog)s research "Building a Real-Time LED Controller" --period 2025-09
 
+  # With description for research context
+  %(prog)s research "AccessorySetupKit Integration" --period 2025-08 \\
+    -d "Focus on how we implemented Apple's AccessorySetupKit for seamless BLE pairing"
+
+  # With writing instructions
+  %(prog)s research "AccessorySetupKit Integration" --period 2025-08 \\
+    -i "Write for a non-technical audience, focus on user benefits"
+
   # Stage 2: Write (after reviewing/editing research)
   %(prog)s write output/blog/building-a-real-time-led-controller/research.md
 
   # Combined: Run both stages
-  %(prog)s full "Building a Real-Time LED Controller" --period 2025-09
+  %(prog)s full "Building a Real-Time LED Controller" --period 2025-09 \\
+    -i "Technical deep-dive for iOS developers"
         """,
     )
 
