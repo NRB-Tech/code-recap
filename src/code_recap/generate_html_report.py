@@ -2130,6 +2130,7 @@ def generate_html_page(
 
     <footer class="footer">
         Generated on {datetime.now().strftime("%B %d, %Y")} by <a href="{config.company.url}" target="_blank" rel="noopener">{config.company.name}</a>
+        with <a href="https://github.com/nrb-tech/code-recap" target="_blank" rel="noopener">code-recap</a>
     </footer>
 
     <script>
