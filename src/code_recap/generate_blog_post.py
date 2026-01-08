@@ -29,6 +29,7 @@ from code_recap.arguments import (
     add_root_arg,
     resolve_author,
 )
+from code_recap.formatting import print_heading
 from code_recap.git_activity_review import (
     date_range_to_git_args,
     parse_period,
@@ -1751,9 +1752,7 @@ def cmd_full(args: argparse.Namespace) -> int:
     total_cost = CostTracker()
 
     # Stage 1: Research
-    print("=" * 60, file=sys.stderr)
-    print("Stage 1: Research", file=sys.stderr)
-    print("=" * 60, file=sys.stderr)
+    print_heading("Stage 1: Research")
 
     research_output, research_cost, no_relevant_changes = run_research_stage(
         topic=topic,
@@ -1793,9 +1792,7 @@ def cmd_full(args: argparse.Namespace) -> int:
 
     # Stage 2: Write
     print("", file=sys.stderr)
-    print("=" * 60, file=sys.stderr)
-    print("Stage 2: Write", file=sys.stderr)
-    print("=" * 60, file=sys.stderr)
+    print_heading("Stage 2: Write")
 
     blog_output, write_cost = run_write_stage(
         research_path=research_path,

@@ -29,6 +29,7 @@ from code_recap.arguments import (
     add_root_arg,
     resolve_author,
 )
+from code_recap.formatting import print_heading, print_separator
 from code_recap.git_activity_review import (
     DEFAULT_EXCLUDE_PATTERNS,
     ExcludeConfig,
@@ -916,27 +917,6 @@ class CostTracker:
             f"Output tokens: {format_number(self.total_output_tokens)}, "
             f"Total cost: ${self.total_cost:.4f}"
         )
-
-
-def print_separator(width: int = 60) -> None:
-    """Prints a separator line.
-
-    Args:
-        width: Width of the separator line in characters.
-    """
-    print("=" * width, file=sys.stderr)
-
-
-def print_heading(title: str, width: int = 60) -> None:
-    """Prints a section heading with separator lines.
-
-    Args:
-        title: The heading text to display.
-        width: Width of the separator lines in characters.
-    """
-    print_separator(width)
-    print(title, file=sys.stderr)
-    print_separator(width)
 
 
 def call_llm(

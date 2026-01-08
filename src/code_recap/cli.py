@@ -7,6 +7,8 @@ Provides a single `code-recap` command with subcommands for all functionality.
 import sys
 from typing import Optional
 
+from code_recap.formatting import print_heading, print_separator
+
 
 def main(argv: Optional[list[str]] = None) -> int:
     """Main entry point for the code-recap CLI.
@@ -146,9 +148,7 @@ def init_config(argv: list[str]) -> int:
             print(f"Config file {output_path} already exists (use --force to overwrite)")
         else:
             # Prompt for organization details
-            print("=" * 50)
-            print("Organization Setup (press Enter to skip any)")
-            print("=" * 50)
+            print_heading("Organization Setup (press Enter to skip any)", file=sys.stdout)
             print()
 
             try:
@@ -247,9 +247,8 @@ def init_config(argv: list[str]) -> int:
     # Set up API keys
     keys_added = False
     if not args.no_keys:
-        print("\n" + "=" * 50)
-        print("API Key Setup (press Enter to skip any)")
-        print("=" * 50)
+        print()
+        print_heading("API Key Setup (press Enter to skip any)", file=sys.stdout)
         print("\nGet API keys from:")
         print("  OpenAI:    https://platform.openai.com/api-keys")
         print("  Gemini:    https://aistudio.google.com/apikey")
@@ -322,7 +321,8 @@ def init_config(argv: list[str]) -> int:
             keys_added = True
 
     # Summary
-    print("\n" + "=" * 50)
+    print()
+    print_separator(file=sys.stdout)
     if created_files or keys_added:
         print("Setup complete:")
         for f in created_files:
@@ -333,9 +333,8 @@ def init_config(argv: list[str]) -> int:
         print("No files created.")
 
     # Next steps
-    print("\n" + "=" * 50)
-    print("Next steps:")
-    print("=" * 50)
+    print()
+    print_heading("Next steps:", file=sys.stdout)
 
     print("""
 # Generate a year-in-review summary
