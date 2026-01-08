@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Printing utilities** — New `print_heading()` and `print_separator()` functions for consistent formatting of CLI output.
+- **Configuration file improvements** — `init` command now creates config.yaml in your home directory.
+
 ## [1.3.0] - 2026-01-07
 
 ### Added
