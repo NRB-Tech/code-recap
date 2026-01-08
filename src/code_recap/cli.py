@@ -106,6 +106,9 @@ def init_config(argv: list[str]) -> int:
     import os
     from pathlib import Path
 
+    # Default config location in user's home directory
+    default_config = Path.home() / ".config" / "code-recap" / "config.yaml"
+
     parser = argparse.ArgumentParser(
         prog="code-recap init",
         description="Initialize code-recap configuration and API keys",
@@ -113,8 +116,8 @@ def init_config(argv: list[str]) -> int:
     parser.add_argument(
         "-o",
         "--output",
-        default="config.yaml",
-        help="Config file path (default: config.yaml)",
+        default=str(default_config),
+        help=f"Config file path (default: {default_config})",
     )
     parser.add_argument(
         "-f",
@@ -237,6 +240,7 @@ def init_config(argv: list[str]) -> int:
                     ]
                 )
 
+            output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text("\n".join(config_lines))
             created_files.append(str(output_path))
 
@@ -310,19 +314,12 @@ def init_config(argv: list[str]) -> int:
                     api_keys_section.append(f'  {provider}: "{key}"')
                 api_keys_section.append("")
 
+                output_path.parent.mkdir(parents=True, exist_ok=True)
                 with open(output_path, "a") as f:
                     f.write("\n".join(api_keys_section))
                 print(f"\nAdded API keys to {output_path}")
 
             keys_added = True
-
-            # Remind about gitignore
-            gitignore = Path(".gitignore")
-            config_pattern = str(output_path)
-            if gitignore.exists():
-                content = gitignore.read_text()
-                if config_pattern not in content and "config.yaml" not in content:
-                    print(f"Note: Consider adding {output_path} to .gitignore to protect API keys")
 
     # Summary
     print("\n" + "=" * 50)
