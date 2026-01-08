@@ -58,6 +58,8 @@ See what generated reports look like:
 
 ## Quick Start
 
+We recommend using [uv](https://docs.astral.sh/uv/) to install and run Code Recap easily, however you can install it with `pip` if you prefer.
+
 ```bash
 # Initialize (creates config, prompts for API keys, shows next steps)
 uvx code-recap init
